@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mikaju Payroll — Professional Payroll Software for Kenyan Businesses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0F1E35;
+    --navy-mid: #1A3A5C;
+    --navy-light: #243F5F;
+    --blue: #1D6CC8;
+    --gold: #C9952A;
+    --gold-light: #E8AC3A;
+    --cream: #F7F5F0;
+    --white: #FFFFFF;
+    --surface: #F0F4F9;
+    --border: #D4DCE8;
+    --border-light: #E8EDF5;
+    --text-primary: #0A1628;
+    --text-secondary: #445572;
+    --text-muted: #7A8EA8;
+    --success: #1A6B3A;
+    --success-bg: #EAF5EE;
+    --radius: 6px;
+    --radius-lg: 12px;
+    --radius-xl: 20px;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Outfit', sans-serif; font-size: 16px; color: var(--text-primary); background: var(--white); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-light); padding: 0 48px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-mark { width: 36px; height: 36px; background: var(--navy); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-mark span { font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700; color: var(--gold); }
+  .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+  .logo-name { font-size: 15px; font-weight: 600; color: var(--navy); }
+  .logo-by { font-size: 10px; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+  .nav-links a { text-decoration: none; font-size: 14px; color: var(--text-secondary); transition: color 0.15s; }
+  .nav-links a:hover { color: var(--navy); }
+  .nav-actions { display: flex; align-items: center; gap: 12px; }
+  .btn-ghost { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: var(--navy); background: none; border: none; cursor: pointer; padding: 8px 16px; border-radius: var(--radius); transition: background 0.15s; text-decoration: none; }
+  .btn-ghost:hover { background: var(--surface); }
+  .btn-primary { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: var(--white); background: var(--navy); border: none; cursor: pointer; padding: 8px 20px; border-radius: var(--radius); transition: background 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary:hover { background: var(--navy-light); }
+
+  /* HERO */
+  .hero { background: var(--navy); padding: 96px 48px 80px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(29,108,200,0.12) 0%, transparent 60%); pointer-events: none; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(201,149,42,0.15); border: 1px solid rgba(201,149,42,0.3); color: var(--gold-light); font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 28px; }
+  .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .hero h1 { font-family: 'Libre Baskerville', serif; font-size: 54px; font-weight: 700; color: var(--white); line-height: 1.18; max-width: 760px; margin: 0 auto 20px; letter-spacing: -0.5px; }
+  .hero h1 em { font-style: italic; color: var(--gold); }
+  .hero p { font-size: 18px; font-weight: 300; color: rgba(255,255,255,0.65); max-width: 560px; margin: 0 auto 40px; line-height: 1.7; }
+  .hero-cta { display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .btn-hero-primary { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: var(--navy); background: var(--gold); border: none; cursor: pointer; padding: 14px 32px; border-radius: var(--radius); transition: background 0.15s, transform 0.1s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-hero-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .btn-hero-ghost { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); cursor: pointer; padding: 13px 28px; border-radius: var(--radius); transition: background 0.15s; text-decoration: none; }
+  .btn-hero-ghost:hover { background: rgba(255,255,255,0.14); }
+  .hero-meta { margin-top: 40px; display: flex; justify-content: center; align-items: center; gap: 32px; flex-wrap: wrap; }
+  .hero-meta-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.45); }
+
+  /* TRUST BAR */
+  .trust-bar { background: var(--cream); border-bottom: 1px solid var(--border-light); padding: 16px 48px; display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
+  .trust-label { font-size: 11px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+  .trust-items { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+  .trust-item { font-size: 13px; font-weight: 500; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .trust-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+  /* SECTION */
+  section { padding: 80px 48px; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+  .section-title { font-family: 'Libre Baskerville', serif; font-size: 38px; font-weight: 700; color: var(--navy); line-height: 1.2; margin-bottom: 16px; letter-spacing: -0.3px; }
+  .section-sub { font-size: 17px; font-weight: 300; color: var(--text-secondary); max-width: 540px; line-height: 1.7; }
+
+  /* FEATURES */
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 56px; }
+  .feature-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; transition: border-color 0.2s, transform 0.2s; }
+  .feature-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+  .feature-icon { width: 44px; height: 44px; background: var(--surface); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+  .feature-card h3 { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 10px; }
+  .feature-card p { font-size: 14px; font-weight: 300; color: var(--text-secondary); line-height: 1.65; }
+
+  /* OFFLINE */
+  .offline-section { background: var(--navy); color: var(--white); }
+  .offline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; max-width: 1100px; margin: 0 auto; }
+  .offline-section .section-label { color: var(--gold); }
+  .offline-section .section-title { color: var(--white); }
+  .offline-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+  .offline-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.75); font-size: 13px; padding: 7px 14px; border-radius: 100px; display: flex; align-items: center; gap: 6px; }
+  .offline-pill.gold { background: rgba(201,149,42,0.15); border-color: rgba(201,149,42,0.3); color: var(--gold-light); }
+  .sync-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--radius-xl); padding: 32px; }
+  .sync-status { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sync-label { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .sync-badge { font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 100px; }
+  .sync-badge.online { background: rgba(26,107,58,0.25); color: #4ADE80; border: 1px solid rgba(74,222,128,0.25); }
+  .sync-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .sync-row:last-child { border-bottom: none; }
+  .sync-row-label { font-size: 13px; color: rgba(255,255,255,0.55); }
+  .sync-row-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .sync-row-value.success { color: #4ADE80; }
+
+  /* PRICING */
+  .pricing-section { background: var(--cream); }
+  .pricing-toggle-wrap { display: flex; justify-content: center; margin: 40px 0 48px; }
+  .pricing-toggle { background: var(--white); border: 1px solid var(--border); border-radius: 100px; padding: 4px; display: flex; align-items: center; gap: 4px; }
+  .toggle-btn { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; border: none; border-radius: 100px; padding: 8px 24px; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-secondary); }
+  .toggle-btn.active { background: var(--navy); color: var(--white); }
+  .save-badge { background: var(--success-bg); color: var(--success); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(26,107,58,0.2); margin-left: 8px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 960px; margin: 0 auto; }
+  .pricing-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 36px 32px; position: relative; transition: transform 0.2s; }
+  .pricing-card:hover { transform: translateY(-3px); }
+  .pricing-card.featured { border-color: var(--navy); border-width: 2px; }
+  .featured-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--navy); color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 16px; border-radius: 100px; white-space: nowrap; }
+  .pricing-tier { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  .pricing-tier.enterprise { color: var(--gold); }
+  .pricing-amount .currency { font-size: 18px; font-weight: 500; color: var(--text-secondary); vertical-align: top; margin-top: 8px; display: inline-block; }
+  .pricing-amount .amount { font-family: 'Libre Baskerville', serif; font-size: 48px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .pricing-amount .amount.zero { color: var(--text-muted); }
+  .pricing-cadence { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+  .pricing-divider { height: 1px; background: var(--border-light); margin: 24px 0; }
+  .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+  .pricing-features li { font-size: 14px; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 10px; }
+  .check-icon { flex-shrink: 0; width: 18px; height: 18px; background: var(--success-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .check-icon svg { color: var(--success); }
+  .x-icon { flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; margin-top: 1px; color: var(--border); }
+  .pricing-cta { display: block; width: 100%; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; text-align: center; padding: 13px; border-radius: var(--radius); text-decoration: none; cursor: pointer; transition: all 0.15s; border: 1px solid var(--navy); color: var(--navy); background: transparent; }
+  .pricing-cta:hover { background: var(--navy); color: var(--white); }
+  .pricing-cta.primary { background: var(--navy); color: var(--white); }
+  .pricing-cta.primary:hover { background: var(--navy-light); }
+  .pricing-cta.gold { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+  .pricing-cta.gold:hover { background: var(--gold-light); }
+
+  /* HOW IT WORKS */
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 60px; position: relative; }
+  .steps-grid::before { content: ''; position: absolute; top: 22px; left: 11%; width: 78%; height: 1px; background: var(--border); }
+  .step-item { text-align: center; position: relative; }
+  .step-num { width: 44px; height: 44px; background: var(--white); border: 2px solid var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-family: 'Libre Baskerville', serif; font-size: 16px; font-weight: 700; color: var(--navy); position: relative; z-index: 1; }
+  .step-item h4 { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+  .step-item p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+  /* COMPLIANCE */
+  .compliance-section { background: var(--surface); padding: 60px 48px; }
+  .compliance-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 64px; }
+  .compliance-text { flex: 1; }
+  .compliance-badges { display: flex; flex-wrap: wrap; gap: 12px; flex-shrink: 0; }
+  .comp-badge { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; text-align: center; }
+  .comp-badge .badge-icon { font-size: 20px; margin-bottom: 4px; }
+  .comp-badge .badge-label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--navy); }
+
+  /* DOWNLOAD */
+  .download-section { padding: 80px 48px; text-align: center; }
+  .download-grid { display: flex; justify-content: center; gap: 16px; margin-top: 40px; flex-wrap: wrap; }
+  .download-btn { display: flex; align-items: center; gap: 12px; background: var(--navy); color: var(--white); text-decoration: none; padding: 14px 28px; border-radius: var(--radius); transition: background 0.15s; min-width: 180px; }
+  .download-btn:hover { background: var(--navy-light); }
+  .download-btn .dl-icon { font-size: 24px; }
+  .download-btn .dl-text { text-align: left; }
+  .download-btn .dl-sub { font-size: 10px; opacity: 0.6; letter-spacing: 0.5px; text-transform: uppercase; }
+  .download-btn .dl-name { font-size: 15px; font-weight: 500; }
+
+  /* FOOTER */
+  footer { background: var(--navy); color: rgba(255,255,255,0.5); padding: 48px; }
+  .footer-top { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 32px; }
+  .footer-brand .logo-name { color: var(--white); font-size: 16px; }
+  .footer-brand .logo-by { color: rgba(255,255,255,0.3); }
+  .footer-brand p { margin-top: 12px; font-size: 13px; max-width: 280px; line-height: 1.6; }
+  .footer-links-grid { display: grid; grid-template-columns: repeat(3, 120px); gap: 40px; }
+  .footer-col h5 { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 16px; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.4); text-decoration: none; margin-bottom: 10px; transition: color 0.15s; }
+  .footer-col a:hover { color: rgba(255,255,255,0.8); }
+  .footer-bottom { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+  .footer-bottom .dev-credit { color: var(--gold); opacity: 0.7; }
+
+  /* BILLING TOGGLE */
+  .price-monthly { display: inline; }
+  .price-annual { display: none; }
+  body.annual .price-monthly { display: none; }
+  body.annual .price-annual { display: inline; }
+  body.annual .cadence-monthly { display: none; }
+  body.annual .cadence-annual { display: inline; }
+  .cadence-annual { display: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .offline-grid { grid-template-columns: 1fr; gap: 40px; }
+    .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .steps-grid::before { display: none; }
+    .footer-links-grid { grid-template-columns: repeat(2, 1fr); }
+    nav { padding: 0 24px; }
+    section { padding: 60px 24px; }
+    .hero { padding: 64px 24px 56px; }
+    .hero h1 { font-size: 36px; }
+    .compliance-inner { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark"><span>M</span></div>
+    <div class="logo-text">
+      <span class="logo-name">Mikaju Payroll</span>
+      <span class="logo-by">by Mikaju Software Solutions</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#download">Download</a></li>
+    <li><a href="#">Docs</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="#" class="btn-ghost">Sign in</a>
+    <a href="#download" class="btn-primary">
+      Download Free
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">Now Available for Windows, macOS &amp; Linux</div>
+  <h1>Payroll Software That Works <em>Even Offline</em></h1>
+  <p>KRA-compliant payroll for Kenyan businesses. Calculate PAYE, NSSF, SHIF and Housing Levy — with or without internet. Sync to cloud when you're ready.</p>
+  <div class="hero-cta">
+    <a href="#download" class="btn-hero-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Free — Windows
+    </a>
+    <a href="#pricing" class="btn-hero-ghost">View Pricing →</a>
+  </div>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      2026 Tax Rates Built In
+    </div>
+    <div class="hero-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Auto-updates via Cloud
+    </div>
+    <div class="hero-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      End-to-End Encrypted Sync
+    </div>
+    <div class="hero-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      KRA P9A Certified
+    </div>
+  </div>
+</div>
+
+<div class="trust-bar">
+  <span class="trust-label">Compliant with</span>
+  <div class="trust-items">
+    <div class="trust-item"><span class="trust-dot"></span>KRA PAYE (35% Top Band)</div>
+    <div class="trust-item"><span class="trust-dot"></span>SHIF 2.75%</div>
+    <div class="trust-item"><span class="trust-dot"></span>NSSF Tiered Contributions</div>
+    <div class="trust-item"><span class="trust-dot"></span>Affordable Housing Levy 1.5%</div>
+    <div class="trust-item"><span class="trust-dot"></span>Personal Relief KES 2,400/mo</div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="section-label">Core Capabilities</div>
+  <h2 class="section-title">Everything your HR team needs</h2>
+  <p class="section-sub">From a single employee to a hundred, Mikaju Payroll handles every calculation, certificate, and compliance requirement — automatically.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+      <h3>Employee Management</h3>
+      <p>Full employee register: KRA PIN, NSSF, SHIF numbers, bank details, custom deductions and allowances per staff member.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <h3>Payroll Run &amp; Approval</h3>
+      <p>Select a period, auto-calculate gross, net and all statutory deductions for every employee. Review, approve and lock payroll runs.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <h3>KRA-Compliant Payslips</h3>
+      <p>Professional A4 PDF payslips with your company logo and all statutory line items. Bulk-export an entire payroll run in one click.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <h3>P9A Certificate Generator</h3>
+      <p>Official KRA P9A forms in the exact 15-column format required for employee annual tax filings. Export per employee or in bulk.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <h3>Payroll Import</h3>
+      <p>Bulk employee data or monthly payroll via CSV or Excel. Intelligent column mapping handles messy source files without manual cleanup.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+      <h3>Cloud Sync &amp; Backup</h3>
+      <p>Encrypted local SQLite database. Syncs to secure cloud automatically when online. Multi-device access on paid plans.</p>
+    </div>
+  </div>
+</section>
+
+<section class="offline-section">
+  <div class="offline-grid">
+    <div>
+      <div class="section-label">Offline-First Architecture</div>
+      <h2 class="section-title">Your payroll, even without internet</h2>
+      <p class="section-sub" style="color:rgba(255,255,255,0.55)">Mikaju Payroll stores everything locally on your machine. No internet? No problem. Carry out a full payroll run, generate payslips, and print P9As — all offline.</p>
+      <div class="offline-pills">
+        <div class="offline-pill gold">✓ Full payroll calculations offline</div>
+        <div class="offline-pill">PDF payslip export offline</div>
+        <div class="offline-pill">P9A generation offline</div>
+        <div class="offline-pill">Employee management offline</div>
+        <div class="offline-pill gold">↑ Syncs automatically when online</div>
+        <div class="offline-pill">7-day subscription grace period</div>
+      </div>
+    </div>
+    <div class="sync-card">
+      <div class="sync-status">
+        <span class="sync-label">Sync status</span>
+        <span class="sync-badge online">● Online — Synced</span>
+      </div>
+      <div class="sync-row"><span class="sync-row-label">Last sync</span><span class="sync-row-value">Today, 14:23:07</span></div>
+      <div class="sync-row"><span class="sync-row-label">Pending changes</span><span class="sync-row-value success">0 — all clear</span></div>
+      <div class="sync-row"><span class="sync-row-label">Local database</span><span class="sync-row-value">mikaju.db · 4.2 MB</span></div>
+      <div class="sync-row"><span class="sync-row-label">Employees synced</span><span class="sync-row-value">48 records</span></div>
+      <div class="sync-row"><span class="sync-row-label">Payroll runs</span><span class="sync-row-value">14 locked runs</span></div>
+      <div class="sync-row"><span class="sync-row-label">Cloud backup</span><span class="sync-row-value success">✓ Encrypted</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div style="text-align:center">
+    <div class="section-label">Getting Started</div>
+    <h2 class="section-title">Up and running in minutes</h2>
+    <p class="section-sub" style="margin:0 auto">No IT department required. Download, install, and process your first payroll today.</p>
+  </div>
+  <div class="steps-grid">
+    <div class="step-item"><div class="step-num">1</div><h4>Download &amp; Install</h4><p>One installer for Windows, macOS, or Linux. No configuration needed.</p></div>
+    <div class="step-item"><div class="step-num">2</div><h4>Set Up Company</h4><p>Enter your company name, KRA PIN, and industry. Upload your logo.</p></div>
+    <div class="step-item"><div class="step-num">3</div><h4>Add Employees</h4><p>Add manually or import from CSV/Excel. All KRA fields captured.</p></div>
+    <div class="step-item"><div class="step-num">4</div><h4>Run Payroll</h4><p>Select the month. Review calculations. Approve and export payslips.</p></div>
+  </div>
+</section>
+
+<div class="compliance-section">
+  <div class="compliance-inner">
+    <div class="compliance-text">
+      <div class="section-label">Statutory Compliance</div>
+      <h2 class="section-title" style="font-size:28px;margin-bottom:12px">Built for Kenyan law</h2>
+      <p style="font-size:15px;color:var(--text-secondary);line-height:1.7">Mikaju Payroll is built on the latest 2026 KRA, NSSF, SHIF and Housing Levy rates, and updated automatically whenever statutory rates change — at no extra cost.</p>
+    </div>
+    <div class="compliance-badges">
+      <div class="comp-badge"><div class="badge-icon">📋</div><div class="badge-label">PAYE</div></div>
+      <div class="comp-badge"><div class="badge-icon">🏥</div><div class="badge-label">SHIF</div></div>
+      <div class="comp-badge"><div class="badge-icon">🔒</div><div class="badge-label">NSSF</div></div>
+      <div class="comp-badge"><div class="badge-icon">🏠</div><div class="badge-label">Housing</div></div>
+      <div class="comp-badge"><div class="badge-icon">📄</div><div class="badge-label">P9A</div></div>
+      <div class="comp-badge"><div class="badge-icon">✅</div><div class="badge-label">KRA</div></div>
+    </div>
+  </div>
+</div>
+
+<section class="pricing-section" id="pricing">
+  <div style="text-align:center">
+    <div class="section-label">Transparent Pricing</div>
+    <h2 class="section-title">Plans that grow with your business</h2>
+    <p class="section-sub" style="margin:0 auto">No hidden fees. Cancel or change plan anytime.</p>
+  </div>
+  <div class="pricing-toggle-wrap">
+    <div class="pricing-toggle">
+      <button class="toggle-btn active" id="toggle-monthly" onclick="setBilling('monthly')">Monthly</button>
+      <button class="toggle-btn" id="toggle-annual" onclick="setBilling('annual')">Annual <span class="save-badge">Save 16%</span></button>
+    </div>
+  </div>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="pricing-tier">Free</div>
+      <div class="pricing-amount"><span class="amount zero">0</span></div>
+      <div class="pricing-cadence">Forever free · Up to 3 employees</div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Up to 3 employees</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Full PAYE / SHIF / NSSF calculation</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Watermarked payslip PDF</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Offline mode</li>
+        <li><div class="x-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div> <span style="color:var(--text-muted)">Cloud sync</span></li>
+        <li><div class="x-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div> <span style="color:var(--text-muted)">P9A Certificates</span></li>
+        <li><div class="x-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div> <span style="color:var(--text-muted)">Payroll Import</span></li>
+      </ul>
+      <a href="#download" class="pricing-cta">Download Free</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="featured-badge">Most Popular</div>
+      <div class="pricing-tier">Basic</div>
+      <div class="pricing-amount"><span class="currency">KES </span><span class="amount price-monthly">99</span><span class="amount price-annual">999</span></div>
+      <div class="pricing-cadence"><span class="cadence-monthly">per month · Up to 25 employees</span><span class="cadence-annual">per year (KES 83/mo) · Up to 25 employees</span></div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Up to 25 employees</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Full KRA-compliant payslips (no watermark)</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> P9A Certificate Generator</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> CSV / Excel Payroll Import</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Cloud sync (2 devices)</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> 6-month payroll history</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Custom deductions &amp; allowances</li>
+      </ul>
+      <a href="#" class="pricing-cta primary">Start Basic Plan</a>
+    </div>
+    <div class="pricing-card">
+      <div class="pricing-tier enterprise">Enterprise</div>
+      <div class="pricing-amount"><span class="currency">KES </span><span class="amount price-monthly">399</span><span class="amount price-annual">3,999</span></div>
+      <div class="pricing-cadence"><span class="cadence-monthly">per month · Unlimited employees</span><span class="cadence-annual">per year (KES 333/mo) · Unlimited employees</span></div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Unlimited employees</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Multi-company / branch management</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Unlimited devices &amp; users</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Full payroll history &amp; audit trail</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> White-label payslips (your branding)</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> API access for integrations</li>
+        <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div> Priority support (SLA 24hr)</li>
+      </ul>
+      <a href="#" class="pricing-cta gold">Start Enterprise Plan</a>
+    </div>
+  </div>
+  <p style="text-align:center;margin-top:32px;font-size:13px;color:var(--text-muted)">All plans billed via Paystack. Cancel anytime. Prices exclude VAT where applicable.</p>
+</section>
+
+<section class="download-section" id="download">
+  <div class="section-label" style="text-align:center">Available Now</div>
+  <h2 class="section-title" style="text-align:center">Download Mikaju Payroll</h2>
+  <p class="section-sub" style="margin:12px auto 0;text-align:center">Free to download. No account required to get started.</p>
+  <div class="download-grid">
+    <a href="#" class="download-btn"><div class="dl-icon">🪟</div><div class="dl-text"><div class="dl-sub">Download for</div><div class="dl-name">Windows</div></div></a>
+    <a href="#" class="download-btn"><div class="dl-icon">🍎</div><div class="dl-text"><div class="dl-sub">Download for</div><div class="dl-name">macOS</div></div></a>
+    <a href="#" class="download-btn"><div class="dl-icon">🐧</div><div class="dl-text"><div class="dl-sub">Download for</div><div class="dl-name">Linux</div></div></a>
+  </div>
+  <p style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted)">v1.0.0 · 64-bit · Auto-updates enabled · Windows 10 / macOS 12 / Ubuntu 22.04+</p>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:0">
+        <div class="logo-mark"><span>M</span></div>
+        <div class="logo-text">
+          <span class="logo-name">Mikaju Payroll</span>
+          <span class="logo-by">by Mikaju Software Solutions</span>
+        </div>
+      </div>
+      <p>Professional payroll software for Kenyan businesses. Compliant, offline-capable, and built to scale.</p>
+    </div>
+    <div class="footer-links-grid">
+      <div class="footer-col"><h5>Product</h5><a href="#">Features</a><a href="#">Pricing</a><a href="#">Download</a><a href="#">Changelog</a></div>
+      <div class="footer-col"><h5>Resources</h5><a href="#">Documentation</a><a href="#">Blog</a><a href="#">KRA Updates</a><a href="#">Support</a></div>
+      <div class="footer-col"><h5>Legal</h5><a href="#">Terms of Service</a><a href="#">Privacy Policy</a><a href="#">Data Processing</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Mikaju Software Solutions. All rights reserved. Nairobi, Kenya.</span>
+    <span class="dev-credit">A product of Mikaju Software Solutions</span>
+  </div>
+</footer>
+
+<script>
+  function setBilling(mode) {
+    document.body.classList.toggle('annual', mode === 'annual');
+    document.getElementById('toggle-monthly').classList.toggle('active', mode === 'monthly');
+    document.getElementById('toggle-annual').classList.toggle('active', mode === 'annual');
+  }
+</script>
+</body>
+</html>
