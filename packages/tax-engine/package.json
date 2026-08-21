@@ -1,0 +1,11 @@
+{
+  "name": "@mikaju/tax-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Versioned statutory payroll calculations for 9 East/Central African countries.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node tests/allCountries.test.js"
+  },
+  "license": "UNLICENSED"
+}

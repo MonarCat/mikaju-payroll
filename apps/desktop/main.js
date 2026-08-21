@@ -13,6 +13,7 @@ const { getSupabaseClient } = require('./supabaseClient');
 const { initDatabase, getDb, newId, writeRecord } = require('./db');
 const { runSync, registerPeriodicSync } = require('./sync/syncEngine');
 const { getCurrentEntitlement } = require('./license/licenseManager');
+const { calculatePayroll, COUNTRIES } = require('@mikaju/tax-engine');
 
 const isDev = !app.isPackaged;
 let mainWindow;
@@ -38,6 +39,24 @@ function createWindow() {
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle('countries:list', () => COUNTRIES);
+
+  ipcMain.handle('companies:get', () => {
+    if (!activeCompanyId) return null;
+    return getDb().prepare('select * from companies where id = ?').get(activeCompanyId);
+  });
+
+  ipcMain.handle('companies:create', (_e, company) => {
+    const now = new Date().toISOString();
+    const record = { id: newId(), version: 1, created_at: now, updated_at: now, ...company };
+    writeRecord('companies', 'insert', record);
+    activeCompanyId = record.id;
+    getDb().prepare(
+      "insert into app_meta (key,value) values ('active_company_id',?) on conflict(key) do update set value=excluded.value"
+    ).run(record.id);
+    return record;
+  });
+
   ipcMain.handle('employees:list', (_e, companyId) =>
     getDb().prepare('select * from employees where company_id = ? and status = ? order by full_name')
       .all(companyId, 'active')
@@ -65,6 +84,71 @@ function registerIpcHandlers() {
     const now = new Date().toISOString();
     const record = { id: newId(), company_id: companyId, period_month: periodMonth, period_year: periodYear, status: 'draft', approved_by: null, approved_at: null, created_at: now, updated_at: now };
     writeRecord('payroll_runs', 'insert', record);
+    return record;
+  });
+
+  // Runs the versioned tax engine for one employee. Renderer never imports
+  // @mikaju/tax-engine directly — it always goes through here, so there is
+  // exactly one place in the whole app that produces a payslip breakdown.
+  ipcMain.handle('payroll:calculate', (_e, { grossPay, countryCode, options }) => {
+    return calculatePayroll({ grossPay, ...options }, countryCode);
+  });
+
+  // Generates (or regenerates, while the run is still 'draft') a payslip
+  // row per active employee for a run, using each employee's current
+  // gross pay and the company's country. Does NOT lock the run — that is
+  // a separate, explicit approval step so a run can be reviewed first.
+  ipcMain.handle('payslips:generateForRun', (_e, { payrollRunId, companyId, countryCode }) => {
+    const run = getDb().prepare('select status from payroll_runs where id = ?').get(payrollRunId);
+    if (run && run.status === 'locked') {
+      throw new Error('This payroll run is locked and approved — it cannot be recalculated. Create a new run instead.');
+    }
+
+    // Regeneration replaces prior draft payslips for this run rather than
+    // duplicating them, so re-running the wizard after editing an
+    // employee's gross pay reflects the correction instead of adding rows.
+    // Goes through writeRecord (not a raw DELETE) so the deletion is queued
+    // for remote sync too, not just applied locally.
+    const priorPayslips = getDb().prepare('select id from payslips where payroll_run_id = ?').all(payrollRunId);
+    for (const p of priorPayslips) writeRecord('payslips', 'delete', { id: p.id });
+
+    const employees = getDb()
+      .prepare('select * from employees where company_id = ? and status = ?')
+      .all(companyId, 'active');
+
+    const now = new Date().toISOString();
+    const payslips = employees.map((employee) => {
+      const breakdown = calculatePayroll({ grossPay: employee.gross_pay }, countryCode);
+      const record = {
+        id: newId(),
+        payroll_run_id: payrollRunId,
+        employee_id: employee.id,
+        breakdown_json: JSON.stringify(breakdown),
+        net_pay: breakdown.netPay,
+        version: 1,
+        created_at: now,
+        updated_at: now,
+      };
+      writeRecord('payslips', 'insert', record);
+      return record;
+    });
+
+    writeRecord('payroll_runs', 'update', {
+      id: payrollRunId,
+      status: 'reviewed',
+      updated_at: now,
+    });
+
+    return payslips;
+  });
+
+  // Approval is the final, irreversible step: it also locks the run.
+  // Once locked, payslips.generateForRun refuses to touch that run again
+  // (see the guard there) — a locked run's numbers are what got paid.
+  ipcMain.handle('payrollRuns:approve', (_e, { payrollRunId, approvedBy }) => {
+    const now = new Date().toISOString();
+    const record = { id: payrollRunId, status: 'locked', approved_by: approvedBy, approved_at: now, updated_at: now };
+    writeRecord('payroll_runs', 'update', record);
     return record;
   });
 
