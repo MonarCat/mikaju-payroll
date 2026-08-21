@@ -1,30 +1,44 @@
 /**
  * License manager — Mikaju Payroll.
  *
- * Entitlement (free / basic / enterprise) has to be checkable WITHOUT a
- * network connection, since this is an offline-first desktop app. The
- * `license-issue` edge function signs a compact token with the server-side
- * ECDSA private key (MIKAJU_LICENSE_PRIVATE_KEY); this module verifies that
- * signature locally against the committed publicKey.json. Nobody can forge
- * an "enterprise" entitlement without the private key, even fully offline.
+ * Verifies the entitlement token issued by the license-issue edge function
+ * WITHOUT needing a network connection, since this is an offline-first
+ * desktop app. Nobody can forge a paid entitlement offline without the
+ * server-side ECDSA private key (MIKAJU_LICENSE_PRIVATE_KEY) — this module
+ * only holds the matching public key and verifies signatures against it.
  *
- * Token shape (JSON, base64url-encoded, ES256-signed — same structure as a
- * JWT but we roll our own tiny verifier so this file has zero dependencies
- * beyond Node's built-in crypto):
- *   { companyId, plan: 'free'|'basic'|'enterprise', issuedAt, expiresAt }
+ * REAL wire format (confirmed from the deployed license-issue source,
+ * 2026-08-21 — this comment exists because an earlier version of this file
+ * was written against an invented format that didn't match the deployed
+ * function at all):
  *
- * GRACE PERIOD: if the cached token has expired but the app can't reach the
- * server to refresh it (offline), we allow a 14-day grace period at the
- * last-known plan before silently downgrading to 'free'. This avoids
- * punishing a paying, offline user while still bounding how long a token
- * can be relied on without server contact.
+ *   { payload: { company_id, plan_tier, employee_limit, issued_at, expires_at },
+ *     signature: "<base64url, no padding, IEEE-P1363 raw r||s>" }
+ *
+ * Signature covers JSON.stringify(payload) exactly as constructed server-
+ * side — company_id, plan_tier, employee_limit, issued_at, expires_at, in
+ * that insertion order. Verification re-serializes the payload object we
+ * received (JS preserves string-key insertion order from JSON.parse) and
+ * checks it against the same bytes. Signed with ECDSA P-256 / SHA-256 via
+ * Deno's Web Crypto — verified here with the same explicit digest, not a
+ * null/implicit one, so a Node crypto default can never silently diverge
+ * from what the server actually used.
+ *
+ * GRACE PERIOD: license-issue itself already bakes a short validity window
+ * into expires_at (7 days for active, 2 for past_due, 30 for free — see
+ * its GRACE_DAYS map), based on subscription health. On top of that, this
+ * module adds a further 14-day OFFLINE grace period after expires_at, so a
+ * paying customer who can't reach the internet for two weeks (travel, a
+ * bad connection) doesn't get silently downgraded mid-trip. These are two
+ * different concerns: the server's window reflects subscription health;
+ * this module's window reflects "we simply haven't been able to ask".
  */
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
 const PUBLIC_KEY_JWK = JSON.parse(fs.readFileSync(path.join(__dirname, 'publicKey.json'), 'utf8'));
-const GRACE_PERIOD_MS = 14 * 24 * 60 * 60 * 1000;
+const OFFLINE_GRACE_PERIOD_MS = 14 * 24 * 60 * 60 * 1000;
 
 let _publicKeyObj = null;
 function publicKey() {
@@ -39,41 +53,45 @@ function b64urlToBuf(s) {
 }
 
 /**
- * Verifies a signed entitlement token. Returns the parsed payload if the
- * signature is valid, or null if it isn't (tampered, wrong key, malformed).
- * Does NOT check expiry — callers decide how to treat an expired-but-valid
- * token (see GRACE_PERIOD_MS above).
+ * Verifies a { payload, signature } envelope. Returns the payload object
+ * (with the server's real field names — company_id, plan_tier, etc.) if
+ * the signature checks out, or null if it doesn't (tampered, wrong key,
+ * malformed, or re-serialization didn't match — see canonicalization note
+ * above). Does NOT check expiry — callers decide how to treat that.
  */
-function verifyToken(token) {
+function verifyToken(envelope) {
   try {
-    const [payloadB64, sigB64] = token.split('.');
-    if (!payloadB64 || !sigB64) return null;
+    const { payload, signature } = typeof envelope === 'string' ? JSON.parse(envelope) : envelope;
+    if (!payload || !signature) return null;
 
-    const signature = b64urlToBuf(sigB64);
+    const canonicalBytes = Buffer.from(JSON.stringify(payload));
+    const sigBuf = b64urlToBuf(signature);
+
     const verified = crypto.verify(
-      null, // ES256 uses the hash embedded in the key algorithm
-      Buffer.from(payloadB64),
+      'sha256',
+      canonicalBytes,
       { key: publicKey(), dsaEncoding: 'ieee-p1363' },
-      signature
+      sigBuf
     );
-    if (!verified) return null;
-
-    return JSON.parse(b64urlToBuf(payloadB64).toString('utf8'));
+    return verified ? payload : null;
   } catch {
     return null;
   }
 }
 
-function loadCachedToken() {
+function loadCachedEnvelope() {
   const { getDb } = require('../db');
   const row = getDb().prepare("select value from app_meta where key = 'license_token'").get();
   return row ? row.value : null;
 }
 
+/**
+ * Called by syncEngine.js with the raw { payload, signature } body
+ * returned by license-issue. Rejects and discards anything that doesn't
+ * verify — a corrupted or tampered cache must never silently grant access.
+ */
 function setCachedEntitlement(responseBody) {
-  // license-issue returns { token: '<payload>.<signature>' }
-  const token = typeof responseBody === 'string' ? responseBody : responseBody.token;
-  if (!token || !verifyToken(token)) {
+  if (!verifyToken(responseBody)) {
     console.warn('[Mikaju] Rejected license token — invalid signature.');
     return;
   }
@@ -82,31 +100,40 @@ function setCachedEntitlement(responseBody) {
     .prepare(
       "insert into app_meta (key,value) values ('license_token',?) on conflict(key) do update set value=excluded.value"
     )
-    .run(token);
+    .run(JSON.stringify(responseBody));
 }
 
 /**
  * The single function the rest of the app (IPC handler, payslip PDF
- * generator) should call. Never throws — always returns a usable
- * entitlement, defaulting to 'free' when nothing valid is available.
+ * generator, employee-limit enforcement) should call. Never throws —
+ * always returns a usable entitlement, defaulting to 'free' when nothing
+ * valid is available. Translates the server's field names into a stable
+ * internal shape ONCE, here, so the rest of the codebase never has to
+ * know or care that the wire format uses snake_case Postgres-style names.
  */
 function getCurrentEntitlement() {
-  const FREE = { plan: 'free', companyId: null, source: 'default' };
+  const FREE = { plan: 'free', companyId: null, employeeLimit: 3, source: 'default' };
 
-  const token = loadCachedToken();
-  if (!token) return FREE;
+  const envelope = loadCachedEnvelope();
+  if (!envelope) return FREE;
 
-  const payload = verifyToken(token);
+  const payload = verifyToken(envelope);
   if (!payload) return FREE; // corrupted or tampered cache — do not trust it
 
   const now = Date.now();
-  const expiresAt = new Date(payload.expiresAt).getTime();
+  const expiresAt = new Date(payload.expires_at).getTime();
+
+  const normalized = {
+    plan: payload.plan_tier,
+    companyId: payload.company_id,
+    employeeLimit: payload.employee_limit ?? null, // null = unlimited (enterprise)
+  };
 
   if (now <= expiresAt) {
-    return { ...payload, source: 'verified' };
+    return { ...normalized, source: 'verified' };
   }
-  if (now <= expiresAt + GRACE_PERIOD_MS) {
-    return { ...payload, source: 'grace-period', graceExpiresAt: new Date(expiresAt + GRACE_PERIOD_MS).toISOString() };
+  if (now <= expiresAt + OFFLINE_GRACE_PERIOD_MS) {
+    return { ...normalized, source: 'grace-period', graceExpiresAt: new Date(expiresAt + OFFLINE_GRACE_PERIOD_MS).toISOString() };
   }
   return FREE; // expired past grace — downgrade until we can reach the server again
 }

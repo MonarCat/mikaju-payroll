@@ -65,6 +65,17 @@ function registerIpcHandlers() {
   );
 
   ipcMain.handle('employees:create', (_e, employee) => {
+    const entitlement = getCurrentEntitlement();
+    if (entitlement.employeeLimit !== null) {
+      const activeCount = getDb()
+        .prepare('select count(*) as n from employees where company_id = ? and status = ?')
+        .get(employee.company_id, 'active').n;
+      if (activeCount >= entitlement.employeeLimit) {
+        throw new Error(
+          `Your ${entitlement.plan} plan is limited to ${entitlement.employeeLimit} employees. Upgrade to add more.`
+        );
+      }
+    }
     const now = new Date().toISOString();
     const record = { id: newId(), version: 1, created_at: now, updated_at: now, ...employee };
     writeRecord('employees', 'insert', record);
@@ -208,6 +219,21 @@ function registerIpcHandlers() {
     const supabase = getSupabaseClient();
     if (isOnline && supabase && activeCompanyId) {
       runSync(supabase, activeCompanyId).catch(err => console.error('Reconnect sync failed:', err));
+    }
+  });
+
+  // Forwarded from the renderer's own Supabase Auth session (see preload.js
+  // auth.syncSession). Without this, the main process's Supabase client
+  // never has a real user JWT, and any RLS-scoped call it makes — most
+  // importantly license-issue — fails with 401 every time, silently.
+  ipcMain.on('auth:sessionChanged', (_e, session) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    if (session?.access_token && session?.refresh_token) {
+      supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token })
+        .catch(err => console.error('Failed to sync auth session to main process:', err));
+    } else {
+      supabase.auth.signOut().catch(() => {});
     }
   });
 }

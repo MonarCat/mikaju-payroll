@@ -53,6 +53,14 @@ contextBridge.exposeInMainWorld('mikaju', {
       return () => ipcRenderer.removeListener('sync:statusChanged', listener);
     },
   },
+  auth: {
+    // The main process's Supabase client is a SEPARATE instance from the
+    // renderer's — it never receives a session just because the renderer
+    // signed in. license-issue (and any future RLS-scoped call from main)
+    // needs a real user JWT, so the renderer forwards its session here
+    // every time it changes (sign in, token refresh, sign out).
+    syncSession: (session) => ipcRenderer.send('auth:sessionChanged', session),
+  },
   network: {
     reportStatusChanged: (isOnline) => ipcRenderer.send('network:statusChanged', isOnline),
   },

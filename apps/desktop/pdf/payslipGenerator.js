@@ -63,10 +63,17 @@ async function generatePayslipPdf({ company, employee, payslip, plan, periodLabe
 
   // --- Optional logo -------------------------------------------------------
   let headerTextX = MARGIN;
-  if (company.logo_path && fs.existsSync(company.logo_path)) {
+  // NOTE: locally this currently holds an on-disk file path, not a real
+  // URL, even though the column is named logo_url to match the remote
+  // schema. That's fine for rendering on THIS device, but a path like
+  // /Users/x/Desktop/logo.png means nothing on another device this
+  // company syncs to. Proper fix is uploading the logo to Supabase
+  // Storage and storing the resulting public URL here instead — flagged
+  // as a known gap, not solved by this file.
+  if (company.logo_url && fs.existsSync(company.logo_url)) {
     try {
-      const bytes = fs.readFileSync(company.logo_path);
-      const isPng = company.logo_path.toLowerCase().endsWith('.png');
+      const bytes = fs.readFileSync(company.logo_url);
+      const isPng = company.logo_url.toLowerCase().endsWith('.png');
       const img = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
       const logoHeight = 40;
       const logoWidth = (img.width / img.height) * logoHeight;

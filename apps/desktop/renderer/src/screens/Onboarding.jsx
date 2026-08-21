@@ -32,7 +32,7 @@ export default function Onboarding() {
         name: name.trim(),
         country_code: countryCode,
         kra_pin: kraPin.trim() || null,
-        logo_path: logoPath,
+        logo_url: logoPath,
       });
       await refresh();
       navigate('/employees');

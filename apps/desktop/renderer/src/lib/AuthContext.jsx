@@ -8,9 +8,13 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session ?? null);
+      window.mikaju.auth.syncSession(data.session ?? null);
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
+      window.mikaju.auth.syncSession(newSession);
     });
     return () => sub.subscription.unsubscribe();
   }, []);

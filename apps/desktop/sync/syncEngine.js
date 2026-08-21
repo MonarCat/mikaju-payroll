@@ -108,10 +108,16 @@ async function pullRemote(supabase, companyId) {
   return results;
 }
 
-async function refreshLicense(supabase) {
+async function refreshLicense(supabase, companyId) {
   const { setCachedEntitlement } = require('../license/licenseManager');
   try {
-    const { data, error } = await supabase.functions.invoke('license-issue', { body: {} });
+    // license-issue requires company_id in the body (it 400s without it)
+    // and an Authorization header with the calling user's real JWT (it
+    // uses that + RLS to confirm this user actually has access to this
+    // company). The Authorization header itself is attached automatically
+    // by supabase-js IF this client instance has an active session — see
+    // main.js's auth:sessionChanged handler, which is what puts one there.
+    const { data, error } = await supabase.functions.invoke('license-issue', { body: { company_id: companyId } });
     if (error) return { refreshed: false, reason: error.message };
     setCachedEntitlement(data);
     return { refreshed: true };
@@ -128,7 +134,7 @@ async function runSync(supabase, companyId) {
 
   const push = await pushOutbox(supabase);
   const pull = await pullRemote(supabase, companyId);
-  const license = await refreshLicense(supabase);
+  const license = await refreshLicense(supabase, companyId);
 
   return { ranAt: new Date().toISOString(), push, pull, license };
 }
