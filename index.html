@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mikaju Payroll — Payroll & HR Software for East Africa</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F1E35">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -511,6 +515,14 @@
   <div class="section-label" style="text-align:center">Available Now</div>
   <h2 class="section-title" style="text-align:center">Download Mikaju Payroll</h2>
   <p class="section-sub" style="margin:12px auto 0;text-align:center">Free to download. No account required. Select your country on first launch. Sign in happens inside the app after installing.</p>
+  <div style="text-align:center;margin-top:24px">
+    <button id="pwa-install-btn" onclick="installPWA()" class="btn-hero-primary" style="display:none;border:none;font-family:inherit;font-size:15px;cursor:pointer">
+      &#8681; Install Mikaju as an app (works right now, no download page needed)
+    </button>
+  </div>
+  <p style="text-align:center;margin-top:8px;font-size:12px;color:var(--text-muted)">
+    Native desktop installers below are built automatically from source — they may take a little while to appear after a new version ships. The install button above works immediately in Chrome, Edge, or most Android browsers.
+  </p>
   <div class="download-grid">
     <a href="https://github.com/MonarCat/mikaju-payroll/releases/latest/download/Mikaju-Payroll-Setup.exe" class="download-btn"><div class="dl-icon">&#128759;</div><div class="dl-text"><div class="dl-sub">Download for</div><div class="dl-name">Windows</div></div></a>
     <a href="https://github.com/MonarCat/mikaju-payroll/releases/latest/download/Mikaju-Payroll.dmg" class="download-btn"><div class="dl-icon">&#63743;</div><div class="dl-text"><div class="dl-sub">Download for</div><div class="dl-name">macOS</div></div></a>
@@ -553,6 +565,41 @@ function setBilling(mode) {
   document.getElementById('toggle-monthly').classList.toggle('active', mode === 'monthly');
   document.getElementById('toggle-annual').classList.toggle('active', mode === 'annual');
 }
+
+// --- PWA install ------------------------------------------------------------
+// Native desktop installers require a tagged release build (see
+// .github/workflows/release.yml) - until/unless that's run, or on any
+// platform where a native installer isn't available yet, this gives
+// people something that actually works today: installing this site
+// itself as an app (offline shell, home-screen/app-list icon, its own
+// window). It is NOT the full payroll app - real payroll data entry
+// still requires the desktop app - but it removes the dead-end 404.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+});
 </script>
 </body>
 </html>
