@@ -5,8 +5,9 @@
  * The renderer never touches any of these directly — everything crosses
  * through preload.js via contextBridge IPC.
  */
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const { getSupabaseClient } = require('./supabaseClient');
@@ -14,6 +15,7 @@ const { initDatabase, getDb, newId, writeRecord } = require('./db');
 const { runSync, registerPeriodicSync } = require('./sync/syncEngine');
 const { getCurrentEntitlement } = require('./license/licenseManager');
 const { calculatePayroll, COUNTRIES } = require('@mikaju/tax-engine');
+const { generatePayslipPdf } = require('./pdf/payslipGenerator');
 
 const isDev = !app.isPackaged;
 let mainWindow;
@@ -153,6 +155,43 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('license:getEntitlement', () => getCurrentEntitlement());
+
+  // Renders one payslip to a PDF on disk and returns its path. Watermarking
+  // is decided entirely inside generatePayslipPdf, based on the caller's
+  // CURRENT entitlement — not whatever plan was active when the run was
+  // calculated. If someone upgrades mid-month, payslips they (re)download
+  // afterward come out clean even for an already-locked run.
+  ipcMain.handle('payslips:generatePdf', async (_e, { payslipId }) => {
+    const db = getDb();
+    const payslip = db.prepare('select * from payslips where id = ?').get(payslipId);
+    if (!payslip) throw new Error(`Payslip ${payslipId} not found.`);
+
+    const run = db.prepare('select * from payroll_runs where id = ?').get(payslip.payroll_run_id);
+    const employee = db.prepare('select * from employees where id = ?').get(payslip.employee_id);
+    const companyRow = db.prepare('select * from companies where id = ?').get(run.company_id);
+    const entitlement = getCurrentEntitlement();
+
+    const periodLabel = new Date(run.period_year, run.period_month - 1, 1)
+      .toLocaleString('en', { month: 'long', year: 'numeric' });
+
+    const pdfBytes = await generatePayslipPdf({
+      company: companyRow,
+      employee,
+      payslip,
+      plan: entitlement.plan,
+      periodLabel,
+    });
+
+    const outDir = path.join(app.getPath('documents'), 'Mikaju Payslips');
+    fs.mkdirSync(outDir, { recursive: true });
+    const safeName = employee.full_name.replace(/[^a-z0-9]+/gi, '_');
+    const outPath = path.join(outDir, `${safeName}_${run.period_year}-${String(run.period_month).padStart(2, '0')}.pdf`);
+    fs.writeFileSync(outPath, pdfBytes);
+
+    return outPath;
+  });
+
+  ipcMain.handle('files:openPath', (_e, filePath) => shell.openPath(filePath));
 
   ipcMain.handle('sync:now', async () => {
     const supabase = getSupabaseClient();

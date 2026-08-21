@@ -90,13 +90,25 @@ export default function PayrollRunWizard() {
           {error && <div className="mk-error">{error}</div>}
 
           <table className="mk-table" style={{ marginBottom: 20 }}>
-            <thead><tr><th>Employee</th><th>Gross</th><th>Net pay</th></tr></thead>
+            <thead><tr><th>Employee</th><th>Gross</th><th>Net pay</th><th></th></tr></thead>
             <tbody>
               {payslips.map((p) => (
                 <tr key={p.id}>
                   <td>{employeesById[p.employee_id]?.full_name || p.employee_id}</td>
                   <td>{employeesById[p.employee_id]?.gross_pay.toLocaleString()}</td>
                   <td>{p.net_pay.toLocaleString()}</td>
+                  <td>
+                    <button
+                      className="mk-btn"
+                      style={{ padding: '4px 10px', fontSize: 12 }}
+                      onClick={async () => {
+                        const filePath = await window.mikaju.payslips.generatePdf({ payslipId: p.id });
+                        window.mikaju.files.openPath(filePath);
+                      }}
+                    >
+                      Payslip PDF
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -31,6 +31,15 @@ contextBridge.exposeInMainWorld('mikaju', {
   },
   payslips: {
     generateForRun: (args) => ipcRenderer.invoke('payslips:generateForRun', args),
+    generatePdf: (args) => ipcRenderer.invoke('payslips:generatePdf', args),
+  },
+  files: {
+    // Electron removed File.path from renderer-side File objects as a
+    // security hardening (sandbox: true in main.js means it was never
+    // available here to begin with) — webUtils.getPathForFile is the
+    // supported replacement for "user picked a file, I need its disk path".
+    getPathForFile: (file) => webUtils.getPathForFile(file),
+    openPath: (filePath) => ipcRenderer.invoke('files:openPath', filePath),
   },
   license: {
     getEntitlement: () => ipcRenderer.invoke('license:getEntitlement'),
@@ -46,12 +55,5 @@ contextBridge.exposeInMainWorld('mikaju', {
   },
   network: {
     reportStatusChanged: (isOnline) => ipcRenderer.send('network:statusChanged', isOnline),
-  },
-  // Electron removed File.path from renderer-side File objects as a
-  // security hardening (sandbox: true in main.js means it was never
-  // available here to begin with) — webUtils.getPathForFile is the
-  // supported replacement for "user picked a file, I need its disk path".
-  files: {
-    getPathForFile: (file) => webUtils.getPathForFile(file),
   },
 });
