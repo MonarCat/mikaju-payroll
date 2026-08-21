@@ -27,14 +27,18 @@ create table if not exists app_meta (
 );
 
 create table if not exists companies (
-  id            text primary key,
-  name          text not null,
-  country_code  text not null,
-  kra_pin       text,
-  logo_path     text,
-  version       integer not null default 1,
-  created_at    text not null,
-  updated_at    text not null
+  id                          text primary key,
+  name                        text not null,
+  country_code                text not null,
+  kra_pin                     text,
+  logo_path                   text,
+  plan_tier                   text default 'free',
+  billing_cycle               text,
+  subscription_status         text,
+  paystack_subscription_code  text,
+  version                     integer not null default 1,
+  created_at                  text not null,
+  updated_at                  text not null
 );
 
 create table if not exists employees (
