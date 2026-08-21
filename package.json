@@ -1,0 +1,16 @@
+{
+  "name": "mikaju-payroll",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mikaju Payroll — offline-first payroll & HR software for Kenyan businesses, by Mikaju Software Solutions.",
+  "workspaces": [
+    "apps/desktop",
+    "packages/tax-engine"
+  ],
+  "scripts": {
+    "test:tax-engine": "npm run test --workspace=@mikaju/tax-engine",
+    "dev:desktop": "npm run dev --workspace=@mikaju/desktop",
+    "build:desktop": "npm run build --workspace=@mikaju/desktop"
+  },
+  "license": "UNLICENSED"
+}
