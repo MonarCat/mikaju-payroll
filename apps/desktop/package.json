@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "description": "Mikaju Payroll desktop app — Electron + React, offline-first.",
+  "author": "Mikaju Software Solutions",
+  "desktopName": "mikaju-payroll.desktop",
   "main": "main.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"electron .\"",
     "build:renderer": "vite build",
-    "build": "vite build && electron-builder"
+    "build": "vite build && electron-builder",
+    "build:legacy-win7": "vite build && electron-builder --win --x64 --config electron-builder.legacy-win7.json"
   },
   "dependencies": {
     "@mikaju/tax-engine": "^1.0.0",
@@ -22,9 +25,56 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^9.0.1",
-    "electron": "^43.4.1",
+    "electron": "43.4.1",
     "electron-builder": "^26.15.3",
     "vite": "^5.4.6"
+  },
+  "build": {
+    "appId": "com.mikajusoftware.payroll",
+    "productName": "Mikaju Payroll",
+    "executableName": "MikajuPayroll",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "supabaseClient.js",
+      "db/**/*",
+      "sync/**/*",
+      "license/**/*",
+      "pdf/**/*",
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "MonarCat",
+      "repo": "mikaju-payroll"
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "Mikaju-Payroll-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.finance",
+      "artifactName": "Mikaju-Payroll.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Office",
+      "artifactName": "Mikaju-Payroll.${ext}",
+      "synopsis": "Offline-first payroll & HR software for East/Central Africa",
+      "syncDesktopName": true
+    }
   },
   "license": "UNLICENSED"
 }

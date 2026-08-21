@@ -1,0 +1,70 @@
+name: Build & release desktop installers
+
+# Triggered by pushing a version tag, e.g.:
+#   git tag v1.0.0 && git push origin v1.0.0
+# This is the ONLY thing that should produce a public release — no build
+# runs automatically on every commit to main, so main can move fast without
+# spamming users with releases for work-in-progress commits.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Installs the whole workspace (tax-engine + desktop) from the root,
+      # matching how it's developed locally — not just apps/desktop in
+      # isolation, since @mikaju/tax-engine is a workspace dependency.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer + tax-engine tests
+        run: npm run test:tax-engine
+
+      # electron-builder --publish always uploads to the GitHub Release
+      # matching the pushed tag, creating a draft release on first run.
+      # GITHUB_TOKEN is provided automatically by Actions — no secret to set up.
+      - name: Build and publish installer
+        working-directory: apps/desktop
+        run: npx vite build && npx electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Separate job: a second Windows installer pinned to Electron 22.3.27 —
+  # the last release before Chromium's minimum OS requirement moved past
+  # Windows 7/8. Runs only on windows-latest since that's the only platform
+  # this variant targets. Kept as its own job (not a matrix entry above) so
+  # a failure here never blocks the three primary installers from shipping.
+  build-legacy-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer
+        working-directory: apps/desktop
+        run: npx vite build
+
+      - name: Build and publish legacy Win7/8 installer
+        working-directory: apps/desktop
+        run: npx electron-builder --win --x64 --config electron-builder.legacy-win7.json --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

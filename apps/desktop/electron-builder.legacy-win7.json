@@ -1,0 +1,36 @@
+{
+  "appId": "com.mikajusoftware.payroll",
+  "productName": "Mikaju Payroll",
+  "executableName": "MikajuPayroll",
+  "directories": {
+    "output": "release-legacy"
+  },
+  "files": [
+    "main.js",
+    "preload.js",
+    "supabaseClient.js",
+    "db/**/*",
+    "sync/**/*",
+    "license/**/*",
+    "pdf/**/*",
+    "dist/**/*",
+    "node_modules/**/*"
+  ],
+  "extraMetadata": {
+    "main": "main.js"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "MonarCat",
+    "repo": "mikaju-payroll"
+  },
+  "electronVersion": "22.3.27",
+  "win": {
+    "target": "nsis",
+    "artifactName": "Mikaju-Payroll-Setup-Win7-Win8.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}

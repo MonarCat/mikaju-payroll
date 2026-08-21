@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-electron/
 release/
+release-legacy/
 *.log
 
 # Local SQLite — never commit real payroll data
