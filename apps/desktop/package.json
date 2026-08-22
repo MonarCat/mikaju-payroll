@@ -57,7 +57,8 @@
     },
     "win": {
       "target": "nsis",
-      "artifactName": "Mikaju-Payroll-Setup.${ext}"
+      "artifactName": "Mikaju-Payroll-Setup.${ext}",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -66,14 +67,16 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.finance",
-      "artifactName": "Mikaju-Payroll.${ext}"
+      "artifactName": "Mikaju-Payroll.${ext}",
+      "icon": "build/icon.icns"
     },
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Office",
       "artifactName": "Mikaju-Payroll.${ext}",
       "synopsis": "Offline-first payroll & HR software for East/Central Africa",
-      "syncDesktopName": true
+      "syncDesktopName": true,
+      "icon": "build/icon.png"
     }
   },
   "license": "UNLICENSED"
