@@ -1,6 +1,6 @@
 {
   "name": "@mikaju/desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "Mikaju Payroll desktop app — Electron + React, offline-first.",
   "homepage": "https://github.com/MonarCat/mikaju-payroll",

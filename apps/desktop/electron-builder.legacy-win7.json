@@ -27,8 +27,10 @@
   },
   "electronVersion": "22.3.27",
   "win": {
-    "target": "nsis",
-    "artifactName": "Mikaju-Payroll-Setup-Win7-Win8.${ext}",
+    "target": [
+      { "target": "nsis", "arch": ["x64", "ia32"] }
+    ],
+    "artifactName": "Mikaju-Payroll-Setup-Win7-Win8-${arch}.${ext}",
     "icon": "build/icon.ico"
   },
   "nsis": {

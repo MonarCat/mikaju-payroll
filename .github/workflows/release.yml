@@ -71,8 +71,8 @@ jobs:
         working-directory: apps/desktop
         run: npx vite build
 
-      - name: Build and publish legacy Win7/8 installer
+      - name: Build and publish legacy Win7/8 installer (x64 + ia32)
         working-directory: apps/desktop
-        run: npx electron-builder --win --x64 --config electron-builder.legacy-win7.json --publish always
+        run: npx electron-builder --win --config electron-builder.legacy-win7.json --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
