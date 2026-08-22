@@ -10,6 +10,14 @@ on:
     tags:
       - 'v*.*.*'
 
+# The automatic GITHUB_TOKEN a workflow run gets is READ-ONLY by default
+# unless explicitly granted write access here — this is what caused the
+# v1.0.1 run to fail with "403 Resource not accessible by integration"
+# when electron-builder tried to create the release. contents: write is
+# the minimum needed to create a release and upload its assets.
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
