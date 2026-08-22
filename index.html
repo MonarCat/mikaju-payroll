@@ -209,7 +209,7 @@
     <li><a href="#download">Download</a></li>
   </ul>
   <div class="nav-actions">
-    <a href="#download" class="btn-ghost">Sign in</a>
+    <a href="#" id="nav-signin-link" onclick="openAuthModal('signin'); return false;" class="btn-ghost">Sign in</a>
     <a href="#download" class="btn-primary">
       Download Free
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -483,7 +483,7 @@
         <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>6-month payroll history</li>
         <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Custom deductions &amp; allowances</li>
       </ul>
-      <a href="#" class="pricing-cta primary">Start Basic Plan</a>
+      <a href="#" onclick="startPlanCheckout('basic'); return false;" class="pricing-cta primary">Start Basic Plan</a>
     </div>
 
     <div class="pricing-card">
@@ -505,7 +505,7 @@
         <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>API access for integrations</li>
         <li><div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>Priority support &middot; SLA 24hr</li>
       </ul>
-      <a href="#" class="pricing-cta gold">Start Enterprise Plan</a>
+      <a href="#" onclick="startPlanCheckout('enterprise'); return false;" class="pricing-cta gold">Start Enterprise Plan</a>
     </div>
   </div>
   <p style="text-align:center;margin-top:32px;font-size:13px;color:var(--text-muted)">Billed in USD via Paystack. Equivalent local currency shown at checkout. Cancel anytime. Prices exclude VAT where applicable.</p>
@@ -514,7 +514,7 @@
 <section class="download-section" id="download">
   <div class="section-label" style="text-align:center">Available Now</div>
   <h2 class="section-title" style="text-align:center">Download Mikaju Payroll</h2>
-  <p class="section-sub" style="margin:12px auto 0;text-align:center">Free to download. No account required. Select your country on first launch. Sign in happens inside the app after installing.</p>
+  <p class="section-sub" style="margin:12px auto 0;text-align:center">Free to download. Sign in with the same account on the website or in the app — either works.</p>
   <div style="text-align:center;margin-top:24px">
     <button id="pwa-install-btn" onclick="installPWA()" class="btn-hero-primary" style="display:none;border:none;font-family:inherit;font-size:15px;cursor:pointer">
       &#8681; Install Mikaju as an app (works right now, no download page needed)
@@ -558,6 +558,169 @@
     <span class="dev-credit">A product of Mikaju Software Solutions</span>
   </div>
 </footer>
+
+<div id="auth-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,30,53,0.6);z-index:1000;align-items:center;justify-content:center;">
+  <div class="mk-modal" style="background:var(--white);border-radius:var(--radius-lg);padding:32px;max-width:380px;width:90%;position:relative;">
+    <button onclick="closeAuthModal()" aria-label="Close" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">&times;</button>
+    <div id="auth-modal-context" style="display:none;font-size:13px;color:var(--text-secondary);background:var(--surface);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button id="auth-tab-signin" onclick="setAuthTab('signin')" style="flex:1;padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--navy);color:var(--white);cursor:pointer;font-family:'Outfit',sans-serif;font-weight:500;">Sign in</button>
+      <button id="auth-tab-signup" onclick="setAuthTab('signup')" style="flex:1;padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:none;color:var(--text-primary);cursor:pointer;font-family:'Outfit',sans-serif;font-weight:500;">Sign up</button>
+    </div>
+    <div id="auth-error" style="display:none;color:#B3261E;font-size:13px;margin-bottom:12px;"></div>
+    <form id="auth-form" onsubmit="return handleAuthSubmit(event)">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Email</label>
+        <input id="auth-email" type="email" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'Outfit',sans-serif;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Password</label>
+        <input id="auth-password" type="password" required minlength="8" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'Outfit',sans-serif;">
+      </div>
+      <button type="submit" id="auth-submit-btn" class="btn-primary" style="width:100%;justify-content:center;border:none;font-family:inherit;font-size:14px;cursor:pointer;">Sign in</button>
+    </form>
+    <p id="auth-confirm-notice" style="display:none;font-size:13px;color:var(--text-secondary);margin-top:14px;">Check your email for a confirmation link, then come back and sign in.</p>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const supabase = createClient(
+    'https://wznopthjoaqusalqoyru.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6bm9wdGhqb2FxdXNhbHFveXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMTMxMzUsImV4cCI6MjA4NjU4OTEzNX0.dzShMzcDrvnI4amVPsfPYP8BCRVJUBKAm-HyUtIIbmk',
+    { auth: { storageKey: 'mikaju-web-auth' } }
+  );
+
+  const PLAN_LABELS = { basic: 'Basic', enterprise: 'Enterprise' };
+  let authMode = 'signin';       // 'signin' | 'signup'
+  let pendingIntentPlan = null;  // plan the modal was opened FOR, if any
+
+  function currentBillingCycle() {
+    return document.body.classList.contains('annual') ? 'yearly' : 'monthly';
+  }
+
+  // Applies a plan selection stored earlier (possibly before the person had
+  // an account yet) to their user metadata, the moment a real session
+  // exists. The desktop app reads this same metadata field to show the
+  // 'you selected X on our website' banner - see AppShell/Upgrade.jsx.
+  async function applyPendingPlanIfAny(session) {
+    if (!session) return;
+    const raw = localStorage.getItem('mikaju_pending_plan');
+    if (!raw) return;
+    try {
+      const { planTier, billingCycle } = JSON.parse(raw);
+      const { error } = await supabase.auth.updateUser({
+        data: { pending_plan_tier: planTier, pending_billing_cycle: billingCycle }
+      });
+      if (!error) {
+        localStorage.removeItem('mikaju_pending_plan');
+        showPostAuthConfirmation(planTier);
+      }
+    } catch { /* malformed local value - ignore rather than block sign-in */ }
+  }
+
+  function showPostAuthConfirmation(planTier) {
+    closeAuthModal();
+    alert(
+      `You're signed in. Download Mikaju and sign in with the same account to finish setting up the ${PLAN_LABELS[planTier] || planTier} plan.`
+    );
+  }
+
+  function updateSignInLinkLabel(session) {
+    const link = document.getElementById('nav-signin-link');
+    if (!link) return;
+    if (session) {
+      link.textContent = 'Signed in — Sign out';
+      link.onclick = async (e) => { e.preventDefault(); await supabase.auth.signOut(); };
+    } else {
+      link.textContent = 'Sign in';
+      link.onclick = (e) => { e.preventDefault(); window.openAuthModal('signin'); };
+    }
+  }
+
+  supabase.auth.getSession().then(({ data }) => updateSignInLinkLabel(data.session));
+  supabase.auth.onAuthStateChange((_event, session) => {
+    updateSignInLinkLabel(session);
+    applyPendingPlanIfAny(session);
+  });
+
+  window.setAuthTab = function (mode) {
+    authMode = mode;
+    document.getElementById('auth-tab-signin').style.background = mode === 'signin' ? 'var(--navy)' : 'none';
+    document.getElementById('auth-tab-signin').style.color = mode === 'signin' ? 'var(--white)' : 'var(--text-primary)';
+    document.getElementById('auth-tab-signup').style.background = mode === 'signup' ? 'var(--navy)' : 'none';
+    document.getElementById('auth-tab-signup').style.color = mode === 'signup' ? 'var(--white)' : 'var(--text-primary)';
+    document.getElementById('auth-submit-btn').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+    document.getElementById('auth-error').style.display = 'none';
+    document.getElementById('auth-confirm-notice').style.display = 'none';
+    document.getElementById('auth-form').style.display = 'block';
+  };
+
+  window.openAuthModal = function (mode, contextPlan) {
+    pendingIntentPlan = contextPlan || null;
+    const contextEl = document.getElementById('auth-modal-context');
+    if (contextPlan) {
+      contextEl.style.display = 'block';
+      contextEl.textContent = `Sign in or create an account to activate the ${PLAN_LABELS[contextPlan]} plan.`;
+    } else {
+      contextEl.style.display = 'none';
+    }
+    window.setAuthTab(mode);
+    document.getElementById('auth-modal-overlay').style.display = 'flex';
+  };
+
+  window.closeAuthModal = function () {
+    document.getElementById('auth-modal-overlay').style.display = 'none';
+    document.getElementById('auth-email').value = '';
+    document.getElementById('auth-password').value = '';
+  };
+
+  window.startPlanCheckout = async function (planTier) {
+    localStorage.setItem('mikaju_pending_plan', JSON.stringify({ planTier, billingCycle: currentBillingCycle() }));
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      await applyPendingPlanIfAny(data.session);
+    } else {
+      window.openAuthModal('signup', planTier);
+    }
+  };
+
+  window.handleAuthSubmit = async function (event) {
+    event.preventDefault();
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error');
+    errorEl.style.display = 'none';
+
+    const { data, error } = authMode === 'signin'
+      ? await supabase.auth.signInWithPassword({ email, password })
+      : await supabase.auth.signUp({ email, password });
+
+    if (error) {
+      errorEl.textContent = error.message;
+      errorEl.style.display = 'block';
+      return false;
+    }
+
+    if (authMode === 'signup' && !data.session) {
+      // Email confirmation is required on this project - no session yet.
+      // The pending plan (if any) stays in localStorage and gets applied
+      // automatically once they actually sign in after confirming.
+      document.getElementById('auth-form').style.display = 'none';
+      document.getElementById('auth-confirm-notice').style.display = 'block';
+      return false;
+    }
+
+    // Sign-in, or sign-up with email confirmation disabled on this project.
+    if (pendingIntentPlan) {
+      await applyPendingPlanIfAny(data.session);
+    } else {
+      closeAuthModal();
+    }
+    return false;
+  };
+</script>
 
 <script>
 function setBilling(mode) {
