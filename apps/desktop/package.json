@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "Mikaju Payroll desktop app — Electron + React, offline-first.",
-  "author": "Mikaju Software Solutions",
+  "homepage": "https://github.com/MonarCat/mikaju-payroll",
+  "author": {
+    "name": "Mikaju Software Solutions",
+    "email": "support@mikajusoftware.com"
+  },
   "desktopName": "mikaju-payroll.desktop",
   "main": "main.js",
   "scripts": {
@@ -76,7 +80,8 @@
       "artifactName": "Mikaju-Payroll.${ext}",
       "synopsis": "Offline-first payroll & HR software for East/Central Africa",
       "syncDesktopName": true,
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "maintainer": "Mikaju Software Solutions <support@mikajusoftware.com>"
     }
   },
   "license": "UNLICENSED"
