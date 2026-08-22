@@ -57,7 +57,8 @@
     "publish": {
       "provider": "github",
       "owner": "MonarCat",
-      "repo": "mikaju-payroll"
+      "repo": "mikaju-payroll",
+      "releaseType": "release"
     },
     "win": {
       "target": "nsis",

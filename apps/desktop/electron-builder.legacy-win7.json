@@ -22,7 +22,8 @@
   "publish": {
     "provider": "github",
     "owner": "MonarCat",
-    "repo": "mikaju-payroll"
+    "repo": "mikaju-payroll",
+    "releaseType": "release"
   },
   "electronVersion": "22.3.27",
   "win": {
