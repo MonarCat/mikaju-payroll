@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelog — Mikaju Payroll</title>
+<meta name="description" content="Release history for the Mikaju Payroll desktop app.">
+<link rel="canonical" href="https://mikaju-payroll.vercel.app/changelog.html">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F1E35">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/docs.css">
+
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="logo-mark"><span>M</span></div>
+    <div class="logo-text">
+      <span class="logo-name">Mikaju Payroll</span>
+      <span class="logo-by">by Mikaju Software Solutions</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/#countries">Countries</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/#pricing">Pricing</a></li>
+    <li><a href="/documentation.html">Documentation</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="/#download" class="btn-ghost">Download</a>
+    <a href="/#download" class="btn-primary">Get Started</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-kicker">Product / Changelog</div>
+    <h1>Changelog</h1>
+    <p>Every release of the Mikaju Payroll desktop app, tracked here. Installers are built automatically from source on every release.</p>
+    <div class="page-meta">Full build history: <a href="https://github.com/MonarCat/mikaju-payroll/releases" style="color:var(--gold-light)">github.com/MonarCat/mikaju-payroll/releases</a></div>
+  </div>
+</div>
+<div class="doc-layout no-sidebar">
+  <div class="doc-content">
+
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">v1.0.2</span><span class="change-type fix">Fix</span></div>
+      <h3>Release pipeline &amp; legacy build stability</h3>
+      <ul>
+        <li>Stabilized the dual-track release pipeline covering modern Electron (Windows 10+, macOS, Linux) and legacy Electron builds for Windows 7/8</li>
+        <li>Verified all installer download links across every supported platform</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">v1.0.1</span><span class="change-type improve">Improved</span></div>
+      <h3>Core renderer screens</h3>
+      <ul>
+        <li>Shipped Login, Signup, and guided Onboarding flows</li>
+        <li>Employee management screen with country-aware required fields</li>
+        <li>Payroll Run Wizard for period selection, calculation, review, and approval</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">v1.0.0</span><span class="change-type new">New</span></div>
+      <h3>Initial release</h3>
+      <ul>
+        <li>Offline-first payroll engine covering all 9 East and Central African countries</li>
+        <li>Full statutory tax engine for Kenya, Uganda, Tanzania, Rwanda, and Ethiopia</li>
+        <li>Core income tax and social contribution engine for Burundi, South Sudan, Somalia, and DR Congo</li>
+        <li>PDF payslip generation and P9A / annual tax certificate generation</li>
+        <li>Encrypted local database with cloud sync and backup</li>
+      </ul>
+    </div>
+
+    <div class="callout info" style="margin-top:12px"><strong>Versioning.</strong>Mikaju follows semantic versioning (major.minor.patch). Statutory rate updates that don't change app behavior are tracked separately on the <a href="/tax-updates.html">Tax Updates</a> page and ship through the same auto-update channel.</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:0">
+        <div class="logo-mark"><span>M</span></div>
+        <div class="logo-text">
+          <span class="logo-name">Mikaju Payroll</span>
+          <span class="logo-by">by Mikaju Software Solutions</span>
+        </div>
+      </a>
+      <p>Professional offline-first payroll &amp; HR software for East Africa. 9 countries. One tool.</p>
+    </div>
+    <div class="footer-links-grid">
+      <div class="footer-col"><h5>Product</h5><a href="/#features">Features</a><a href="/#countries">Countries</a><a href="/#pricing">Pricing</a><a href="/#download">Download</a><a href="/changelog.html">Changelog</a></div>
+      <div class="footer-col"><h5>Resources</h5><a href="/documentation.html">Documentation</a><a href="/tax-updates.html">Tax Updates</a><a href="/blog.html">Blog</a><a href="/support.html">Support</a></div>
+      <div class="footer-col"><h5>Legal</h5><a href="/terms.html">Terms of Service</a><a href="/privacy.html">Privacy Policy</a><a href="/data-processing.html">Data Processing</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Mikaju Software Solutions. All rights reserved. Nairobi, Kenya.</span>
+    <span class="dev-credit">A product of Mikaju Software Solutions</span>
+  </div>
+</footer>
+</body>
+</html>

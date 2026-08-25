@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentation — Mikaju Payroll</title>
+<meta name="description" content="Installation, setup, payroll workflow, offline mode, cloud sync, and troubleshooting for Mikaju Payroll.">
+<link rel="canonical" href="https://mikaju-payroll.vercel.app/documentation.html">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F1E35">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/docs.css">
+
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="logo-mark"><span>M</span></div>
+    <div class="logo-text">
+      <span class="logo-name">Mikaju Payroll</span>
+      <span class="logo-by">by Mikaju Software Solutions</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/#countries">Countries</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/#pricing">Pricing</a></li>
+    <li><a href="/documentation.html">Documentation</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="/#download" class="btn-ghost">Download</a>
+    <a href="/#download" class="btn-primary">Get Started</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-kicker">Resources / Documentation</div>
+    <h1>Documentation</h1>
+    <p>Everything you need to install, configure, and run payroll with Mikaju — from a single employee to a multi-branch, multi-country operation.</p>
+    <div class="page-meta">Covers app version 1.0.2 · Last updated 25 August 2026</div>
+  </div>
+</div>
+<div class="doc-layout">
+  <aside class="doc-sidebar">
+  <h5>Getting Started</h5>
+  <ul>
+    <li><a href="#installation">Installation</a></li>
+    <li><a href="#first-launch">First Launch &amp; Country Setup</a></li>
+    <li><a href="#accounts">Accounts &amp; Sign-In</a></li>
+  </ul>
+  <h5>Core Workflow</h5>
+  <ul>
+    <li><a href="#employees">Employee Management</a></li>
+    <li><a href="#import">Bulk Import</a></li>
+    <li><a href="#payroll-run">Running Payroll</a></li>
+    <li><a href="#payslips">Payslips</a></li>
+    <li><a href="#certificates">Tax Certificates</a></li>
+  </ul>
+  <h5>Data &amp; Sync</h5>
+  <ul>
+    <li><a href="#offline">Offline Mode</a></li>
+    <li><a href="#sync">Cloud Sync &amp; Backup</a></li>
+    <li><a href="#security">Local Data &amp; Security</a></li>
+  </ul>
+  <h5>Reference</h5>
+  <ul>
+    <li><a href="#plans">Plans &amp; Limits</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+</aside>
+  <div class="doc-content">
+
+    <h2 id="installation">Installation</h2>
+    <p>Mikaju Payroll runs as a native desktop application on Windows, macOS, and Linux, and can also be installed as a Progressive Web App directly from the website — no download required.</p>
+    <table>
+      <tr><th>Platform</th><th>Minimum OS</th><th>Notes</th></tr>
+      <tr><td>Windows</td><td>Windows 10 (64-bit)</td><td>Auto-updates enabled</td></tr>
+      <tr><td>Windows (legacy)</td><td>Windows 7 / 8 (32 or 64-bit)</td><td>Separate legacy build; no auto-update, check the Changelog for new versions</td></tr>
+      <tr><td>macOS</td><td>macOS 12 Monterey+</td><td>Universal build</td></tr>
+      <tr><td>Linux</td><td>Ubuntu 22.04+ (or equivalent)</td><td>AppImage — no installation required, just run</td></tr>
+    </table>
+    <div class="callout info"><strong>On Windows 7 or 8?</strong>Use the dedicated legacy installer from the <a href="/#download">Download</a> section. It ships an older but fully compatible app runtime with the same feature set as the current release.</div>
+    <p>To install: download the installer for your platform, run it, and launch Mikaju Payroll. No separate database server or IT setup is required — the app manages its own encrypted local database.</p>
+
+    <h2 id="first-launch">First Launch &amp; Country Setup</h2>
+    <p>On first launch, Mikaju asks which country your business operates in. This single choice loads the correct tax bands, social security contribution rates, statutory levies, and required employee fields for that jurisdiction — you never configure tax logic by hand.</p>
+    <p>Supported countries: Kenya, Uganda, Tanzania, Rwanda, and Ethiopia have a full statutory engine (PAYE bands, social security, health insurance, levies, and annual certificate generation). Burundi, South Sudan, Somalia, and DR Congo have core income tax and social contribution calculations, with additional statutory detail rolling out progressively — see <a href="/tax-updates.html">Tax Updates</a> for the latest coverage per country.</p>
+    <p>You can operate multiple companies or branches across different countries from a single installation on the Enterprise plan; each company retains its own country-specific configuration.</p>
+
+    <h2 id="accounts">Accounts &amp; Sign-In</h2>
+    <p>Your Mikaju account works identically on the website and inside the desktop app — sign in with the same email and password in either place. Free-tier usage does not require an account for local-only operation, but an account is required to enable cloud sync, backup, and multi-device access.</p>
+    <p>Passwords are never stored on your device in plain text. Authentication is handled through an encrypted session that is also shared with the app's background processes, so scheduled sync and license checks continue working without repeated sign-ins.</p>
+
+    <h2 id="employees">Employee Management</h2>
+    <p>The employee register captures full identity and statutory information: national ID, tax PIN/TIN, social security number, bank account details, and any additional fields required by your selected country (for example NSSF tier in Kenya, or RSSB number in Rwanda).</p>
+    <ul>
+      <li>Add employees individually with guided, country-aware forms</li>
+      <li>Edit statutory numbers, banking details, and employment terms at any time</li>
+      <li>Mark employees as active, on leave, or exited without deleting their historical payroll records</li>
+    </ul>
+
+    <h2 id="import">Bulk Import</h2>
+    <p>Bring existing employee registers or a full month's payroll in from CSV or Excel. The importer uses intelligent column mapping to recognize common header variations (e.g. "ID No.", "National ID", "NID") so you rarely need to reformat source files by hand. You'll be shown a preview and mapping confirmation step before anything is committed to your database.</p>
+
+    <h2 id="payroll-run">Running Payroll</h2>
+    <ol>
+      <li>Select the payroll period (month/year).</li>
+      <li>Mikaju auto-calculates gross pay, all statutory deductions, employer contributions, and net pay for every active employee.</li>
+      <li>Review the run — line items are fully visible and editable before approval, including one-off allowances or deductions.</li>
+      <li>Approve and lock the run. Locked runs are immutable and form the basis of your payslips, tax certificates, and audit trail.</li>
+    </ol>
+    <div class="callout warn"><strong>Locking is deliberate.</strong>Once a payroll run is locked, statutory figures for that period are frozen even if tax rates change later — this keeps historical payroll accurate and auditable. To make changes, your plan's history/audit settings determine whether a run can be reopened.</div>
+
+    <h2 id="payslips">Payslips</h2>
+    <p>Payslips are generated as A4 PDFs in the statutory format expected in your country, and can be exported individually or in bulk for an entire payroll run in one click. Free-tier payslips carry a watermark; paid plans generate clean, unwatermarked payslips, with white-label branding available on Enterprise.</p>
+
+    <h2 id="certificates">Tax Certificates</h2>
+    <p>Mikaju generates annual statutory tax certificates in the correct format for employee filings — P9A in Kenya, and the equivalent annual certificate for Uganda, Tanzania, Rwanda, and other supported countries. Certificates are compiled automatically from your locked payroll runs for the tax year.</p>
+
+    <h2 id="offline">Offline Mode</h2>
+    <p>Mikaju is offline-first: every core function — payroll calculation, payslip generation, tax certificate generation, and employee management — works fully without an internet connection, across all 9 supported countries. There is no "offline mode toggle"; the app always works locally first.</p>
+
+    <h2 id="sync">Cloud Sync &amp; Backup</h2>
+    <p>When you're online, your encrypted local database syncs automatically to secure cloud storage. This gives you an off-device backup and, on paid plans, access from multiple devices. If you go offline mid-session, changes queue locally and sync automatically the next time you're connected — there is a 7-day subscription grace period so a lapsed connection never blocks you from running payroll.</p>
+
+    <h2 id="security">Local Data &amp; Security</h2>
+    <p>All data is stored locally in an encrypted SQLite database (<code>mikaju.db</code>) on your device. Cloud-synced data is encrypted in transit and at rest. See the <a href="/privacy.html">Privacy Policy</a> and <a href="/data-processing.html">Data Processing</a> pages for full detail on what is collected, where it is stored, and your rights over it.</p>
+
+    <h2 id="plans">Plans &amp; Limits</h2>
+    <table>
+      <tr><th>Plan</th><th>Employees</th><th>Sync</th><th>History</th></tr>
+      <tr><td>Free</td><td>Up to 3</td><td>Local only, no cloud sync</td><td>Current data only</td></tr>
+      <tr><td>Basic</td><td>Up to 5</td><td>2 devices</td><td>6 months</td></tr>
+      <tr><td>Enterprise</td><td>Unlimited</td><td>Unlimited devices &amp; users</td><td>Full history &amp; audit trail</td></tr>
+    </table>
+    <p>See the full breakdown on the <a href="/#pricing">Pricing</a> page.</p>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <h4>The installer won't open on Windows 7/8</h4>
+    <p>Use the dedicated legacy build (32-bit or 64-bit) linked in the <a href="/#download">Download</a> section — the standard Windows installer targets Windows 10+ and will not run on older systems.</p>
+    <h4>Sync status shows "pending changes"</h4>
+    <p>This means local changes haven't yet reached the cloud, usually because the device is offline or briefly reconnecting. Data is never lost — it syncs automatically once a connection is available. You can keep working normally in the meantime.</p>
+    <h4>A tax certificate looks wrong after a rate change</h4>
+    <p>Check whether the payroll runs for that period were locked before or after the statutory rate update. Locked runs preserve the rates in effect at the time they were approved, by design, so historical certificates remain accurate.</p>
+    <p>For anything not covered here, visit <a href="/support.html">Support</a>.</p>
+
+    <h2 id="faq">FAQ</h2>
+    <h4>Do I need an internet connection to use Mikaju?</h4>
+    <p>No. Every core payroll function works fully offline. An internet connection is only needed for cloud sync, backup, license/subscription checks, and multi-device access.</p>
+    <h4>Can I run payroll for more than one country from one installation?</h4>
+    <p>Yes, on the Enterprise plan, which supports multi-company and multi-branch management — each company retains its own country configuration.</p>
+    <h4>What happens to my data if I cancel my subscription?</h4>
+    <p>Your local database remains fully usable at Free-tier limits. Cloud-synced data is retained per the retention terms in our <a href="/privacy.html">Privacy Policy</a>; you can request export or deletion at any time.</p>
+    <h4>How do I know when statutory rates have changed?</h4>
+    <p>Check <a href="/tax-updates.html">Tax Updates</a> for a dated log of every statutory rate change per country, and how it was reflected in the app.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:0">
+        <div class="logo-mark"><span>M</span></div>
+        <div class="logo-text">
+          <span class="logo-name">Mikaju Payroll</span>
+          <span class="logo-by">by Mikaju Software Solutions</span>
+        </div>
+      </a>
+      <p>Professional offline-first payroll &amp; HR software for East Africa. 9 countries. One tool.</p>
+    </div>
+    <div class="footer-links-grid">
+      <div class="footer-col"><h5>Product</h5><a href="/#features">Features</a><a href="/#countries">Countries</a><a href="/#pricing">Pricing</a><a href="/#download">Download</a><a href="/changelog.html">Changelog</a></div>
+      <div class="footer-col"><h5>Resources</h5><a href="/documentation.html">Documentation</a><a href="/tax-updates.html">Tax Updates</a><a href="/blog.html">Blog</a><a href="/support.html">Support</a></div>
+      <div class="footer-col"><h5>Legal</h5><a href="/terms.html">Terms of Service</a><a href="/privacy.html">Privacy Policy</a><a href="/data-processing.html">Data Processing</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Mikaju Software Solutions. All rights reserved. Nairobi, Kenya.</span>
+    <span class="dev-credit">A product of Mikaju Software Solutions</span>
+  </div>
+</footer>
+</body>
+</html>

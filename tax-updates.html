@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Updates — Mikaju Payroll</title>
+<meta name="description" content="Dated log of statutory PAYE, social security, and levy rate changes across all 9 countries supported by Mikaju Payroll.">
+<link rel="canonical" href="https://mikaju-payroll.vercel.app/tax-updates.html">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F1E35">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/docs.css">
+
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="logo-mark"><span>M</span></div>
+    <div class="logo-text">
+      <span class="logo-name">Mikaju Payroll</span>
+      <span class="logo-by">by Mikaju Software Solutions</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/#countries">Countries</a></li>
+    <li><a href="/#features">Features</a></li>
+    <li><a href="/#pricing">Pricing</a></li>
+    <li><a href="/documentation.html">Documentation</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="/#download" class="btn-ghost">Download</a>
+    <a href="/#download" class="btn-primary">Get Started</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-kicker">Resources / Tax Updates</div>
+    <h1>Tax Updates</h1>
+    <p>A dated record of statutory rate and rule changes across all 9 supported countries, and how each was reflected in Mikaju's tax engine. Every update ships automatically at no extra cost.</p>
+    <div class="page-meta">Tax engine version tracked separately from app version · See <a href="/changelog.html" style="color:var(--gold-light)">Changelog</a> for app releases</div>
+  </div>
+</div>
+<div class="doc-layout no-sidebar">
+  <div class="doc-content">
+
+    <div class="callout info"><strong>How this works.</strong>Mikaju's tax engine uses versioned rate tables per country. When a government publishes a new PAYE band, social security rate, or levy, we update the relevant table and ship it in the next release. Payroll runs you've already locked keep the rates that were in effect at approval time, so historical payslips and certificates stay accurate even after a rate change.</div>
+
+    <h2>Kenya (KE)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Full engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE bands, NSSF Tier I/II contributions, SHIF, Housing Levy, and P9A annual certificate generation are fully modeled and kept current with KRA and NSSF published rates.</p>
+    </div>
+
+    <h2>Uganda (UG)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Full engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE, NSSF (5% employee + 10% employer), and Local Service Tax are fully modeled against URA and NSSF Uganda published rates.</p>
+    </div>
+
+    <h2>Tanzania (TZ)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Full engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE, NSSF (10% employee + 10% employer), Skills Development Levy (SDL), and Workers Compensation Fund (WCF) contributions are fully modeled against TRA published rates.</p>
+    </div>
+
+    <h2>Rwanda (RW)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Full engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE, RSSB Pension, and RSSB Health Insurance contributions are fully modeled against RRA and RSSB published rates.</p>
+    </div>
+
+    <h2>Ethiopia (ET)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Full engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE and pension contributions (private and public sector rates) are fully modeled against Ethiopian Revenue and Customs Authority (later ERCA/MoR) published rates.</p>
+    </div>
+
+    <h2>Burundi (BI)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Core engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE and INSS contributions (6% employee + 15% employer) are modeled. Additional statutory detail is being expanded toward full-engine coverage.</p>
+    </div>
+
+    <h2>South Sudan (SS)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Core engine</span><span class="change-type improve">Current</span></div>
+      <p>PAYE and SSPS contributions (8% employee + 17% employer) are modeled. Additional statutory detail is being expanded toward full-engine coverage.</p>
+    </div>
+
+    <h2>Somalia (SO)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Core engine</span><span class="change-type improve">Current</span></div>
+      <p>Income tax and social contribution calculations are modeled at core level. Additional statutory detail is being expanded toward full-engine coverage.</p>
+    </div>
+
+    <h2>DR Congo (CD)</h2>
+    <div class="entry">
+      <div class="entry-meta"><span class="version-badge">Core engine</span><span class="change-type improve">Current</span></div>
+      <p>IPR (income tax), INSS contributions (5% employee + 13% employer), and ONEM are modeled at core level. Additional statutory detail is being expanded toward full-engine coverage.</p>
+    </div>
+
+    <h2>Subscribe to updates</h2>
+    <p>Statutory rate changes are shipped automatically through the app's regular update channel — there is nothing to configure. If you'd like to be notified by email ahead of a change taking effect, contact <a href="/support.html">Support</a>.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo" style="margin-bottom:0">
+        <div class="logo-mark"><span>M</span></div>
+        <div class="logo-text">
+          <span class="logo-name">Mikaju Payroll</span>
+          <span class="logo-by">by Mikaju Software Solutions</span>
+        </div>
+      </a>
+      <p>Professional offline-first payroll &amp; HR software for East Africa. 9 countries. One tool.</p>
+    </div>
+    <div class="footer-links-grid">
+      <div class="footer-col"><h5>Product</h5><a href="/#features">Features</a><a href="/#countries">Countries</a><a href="/#pricing">Pricing</a><a href="/#download">Download</a><a href="/changelog.html">Changelog</a></div>
+      <div class="footer-col"><h5>Resources</h5><a href="/documentation.html">Documentation</a><a href="/tax-updates.html">Tax Updates</a><a href="/blog.html">Blog</a><a href="/support.html">Support</a></div>
+      <div class="footer-col"><h5>Legal</h5><a href="/terms.html">Terms of Service</a><a href="/privacy.html">Privacy Policy</a><a href="/data-processing.html">Data Processing</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Mikaju Software Solutions. All rights reserved. Nairobi, Kenya.</span>
+    <span class="dev-credit">A product of Mikaju Software Solutions</span>
+  </div>
+</footer>
+</body>
+</html>
