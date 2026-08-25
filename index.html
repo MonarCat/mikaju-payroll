@@ -25,6 +25,13 @@
   html { scroll-behavior: smooth; }
   body { font-family:'Outfit',sans-serif; font-size:16px; color:var(--text-primary); background:var(--white); line-height:1.6; -webkit-font-smoothing:antialiased; }
 
+  .post-auth-banner { background:var(--cream); border-bottom:1px solid var(--border-light); padding:14px 56px 14px 48px; display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; font-size:14px; color:var(--text-secondary); position:relative; }
+  .post-auth-banner strong { color:var(--navy); }
+  .post-auth-banner-cta { font-weight:600; color:var(--blue); text-decoration:none; white-space:nowrap; }
+  .post-auth-banner-cta:hover { text-decoration:underline; }
+  .post-auth-banner-close { position:absolute; right:16px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:18px; line-height:1; cursor:pointer; color:var(--text-muted); padding:4px; }
+  .post-auth-banner-close:hover { color:var(--text-secondary); }
+
   nav { position:sticky; top:0; z-index:100; background:rgba(255,255,255,0.96); backdrop-filter:blur(12px); border-bottom:1px solid var(--border-light); padding:0 48px; height:64px; display:flex; align-items:center; justify-content:space-between; }
   .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
   .logo-mark { width:36px; height:36px; background:var(--navy); border-radius:8px; display:flex; align-items:center; justify-content:center; }
@@ -41,25 +48,20 @@
   .btn-primary { font-family:'Outfit',sans-serif; font-size:14px; font-weight:500; color:var(--white); background:var(--navy); border:none; cursor:pointer; padding:8px 20px; border-radius:var(--radius); transition:background 0.15s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
   .btn-primary:hover { background:var(--navy-light); }
 
-  .hero { background:var(--navy); padding:96px 48px 80px; text-align:center; position:relative; overflow:hidden; }
+  .hero { background:var(--navy); padding:72px 48px 56px; text-align:center; position:relative; overflow:hidden; }
   .hero::before { content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%); width:800px; height:800px; background:radial-gradient(circle,rgba(29,108,200,0.12) 0%,transparent 60%); pointer-events:none; }
-  .hero-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(201,149,42,0.15); border:1px solid rgba(201,149,42,0.3); color:var(--gold-light); font-size:12px; font-weight:500; letter-spacing:1px; text-transform:uppercase; padding:5px 14px; border-radius:100px; margin-bottom:28px; }
+  .hero-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(201,149,42,0.15); border:1px solid rgba(201,149,42,0.3); color:var(--gold-light); font-size:12px; font-weight:500; letter-spacing:1px; text-transform:uppercase; padding:5px 14px; border-radius:100px; margin-bottom:20px; }
   .hero-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--gold); }
-  .hero h1 { font-family:'Libre Baskerville',serif; font-size:54px; font-weight:700; color:var(--white); line-height:1.18; max-width:800px; margin:0 auto 20px; letter-spacing:-0.5px; }
+  .hero h1 { font-family:'Libre Baskerville',serif; font-size:54px; font-weight:700; color:var(--white); line-height:1.18; max-width:800px; margin:0 auto 16px; letter-spacing:-0.5px; }
   .hero h1 em { font-style:italic; color:var(--gold); }
-  .hero p { font-size:18px; font-weight:300; color:rgba(255,255,255,0.65); max-width:580px; margin:0 auto 40px; line-height:1.7; }
+  .hero p { font-size:18px; font-weight:300; color:rgba(255,255,255,0.65); max-width:580px; margin:0 auto 32px; line-height:1.7; }
   .hero-cta { display:flex; justify-content:center; align-items:center; gap:16px; flex-wrap:wrap; }
   .btn-hero-primary { font-family:'Outfit',sans-serif; font-size:15px; font-weight:600; color:var(--navy); background:var(--gold); border:none; cursor:pointer; padding:14px 32px; border-radius:var(--radius); transition:background 0.15s,transform 0.1s; text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
   .btn-hero-primary:hover { background:var(--gold-light); transform:translateY(-1px); }
   .btn-hero-ghost { font-family:'Outfit',sans-serif; font-size:15px; font-weight:400; color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); cursor:pointer; padding:13px 28px; border-radius:var(--radius); transition:background 0.15s; text-decoration:none; }
   .btn-hero-ghost:hover { background:rgba(255,255,255,0.14); }
-  .hero-meta { margin-top:40px; display:flex; justify-content:center; align-items:center; gap:32px; flex-wrap:wrap; }
+  .hero-meta { margin-top:28px; display:flex; justify-content:center; align-items:center; gap:32px; flex-wrap:wrap; }
   .hero-meta-item { display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,0.45); }
-
-  .countries-band { background:var(--navy-mid); padding:20px 48px; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
-  .countries-label { font-size:11px; font-weight:500; letter-spacing:1.2px; text-transform:uppercase; color:rgba(255,255,255,0.4); white-space:nowrap; margin-right:6px; }
-  .country-chip { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.75); font-size:13px; padding:5px 12px; border-radius:100px; }
-  .country-chip .flag { font-size:16px; line-height:1; }
 
   .trust-bar { background:var(--cream); border-bottom:1px solid var(--border-light); padding:16px 48px; display:flex; align-items:center; justify-content:center; gap:48px; flex-wrap:wrap; }
   .trust-label { font-size:11px; font-weight:500; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
@@ -67,23 +69,23 @@
   .trust-item { font-size:13px; font-weight:500; color:var(--text-secondary); display:flex; align-items:center; gap:6px; }
   .trust-dot { width:8px; height:8px; border-radius:50%; background:var(--gold); flex-shrink:0; }
 
-  section { padding:80px 48px; }
+  section { padding:64px 48px; }
   .section-label { font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); margin-bottom:12px; }
   .section-title { font-family:'Libre Baskerville',serif; font-size:38px; font-weight:700; color:var(--navy); line-height:1.2; margin-bottom:16px; letter-spacing:-0.3px; }
   .section-sub { font-size:17px; font-weight:300; color:var(--text-secondary); max-width:560px; line-height:1.7; }
 
   .country-select-section { background:var(--surface); }
   .country-select-inner { max-width:980px; margin:0 auto; }
-  .country-select-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:48px; }
+  .country-select-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:36px; }
   .country-card { background:var(--white); border:2px solid var(--border); border-radius:var(--radius-lg); padding:24px 20px; display:flex; flex-direction:column; align-items:flex-start; gap:10px; transition:border-color 0.2s,transform 0.15s; }
   .country-card:hover { border-color:var(--blue); transform:translateY(-2px); }
   .country-card.full { border-color:rgba(201,149,42,0.4); }
-  .country-flag { font-size:32px; line-height:1; }
+  .country-flag { display:block; width:40px; height:28px; object-fit:cover; border-radius:4px; box-shadow:0 0 0 1px rgba(10,22,40,0.12); }
   .country-card-name { font-size:15px; font-weight:600; color:var(--navy); }
   .country-card-deductions { font-size:12px; color:var(--text-muted); line-height:1.5; }
   .country-badge { font-size:10px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; background:rgba(201,149,42,0.12); color:var(--gold); border:1px solid rgba(201,149,42,0.3); padding:2px 8px; border-radius:4px; }
 
-  .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:56px; }
+  .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:40px; }
   .feature-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:32px; transition:border-color 0.2s,transform 0.2s; }
   .feature-card:hover { border-color:var(--blue); transform:translateY(-2px); }
   .feature-icon { width:44px; height:44px; background:var(--surface); border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
@@ -91,7 +93,7 @@
   .feature-card p { font-size:14px; font-weight:300; color:var(--text-secondary); line-height:1.65; }
 
   .offline-section { background:var(--navy); color:var(--white); }
-  .offline-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; max-width:1100px; margin:0 auto; }
+  .offline-grid { display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; max-width:1100px; margin:0 auto; }
   .offline-section .section-label { color:var(--gold); }
   .offline-section .section-title { color:var(--white); }
   .offline-pills { display:flex; flex-wrap:wrap; gap:10px; margin-top:32px; }
@@ -109,7 +111,7 @@
   .sync-row-value.success { color:#4ADE80; }
 
   .pricing-section { background:var(--cream); }
-  .pricing-toggle-wrap { display:flex; justify-content:center; margin:40px 0 48px; }
+  .pricing-toggle-wrap { display:flex; justify-content:center; margin:32px 0 40px; }
   .pricing-toggle { background:var(--white); border:1px solid var(--border); border-radius:100px; padding:4px; display:flex; align-items:center; gap:4px; }
   .toggle-btn { font-family:'Outfit',sans-serif; font-size:14px; font-weight:500; border:none; border-radius:100px; padding:8px 24px; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--text-secondary); }
   .toggle-btn.active { background:var(--navy); color:var(--white); }
@@ -138,22 +140,14 @@
   .pricing-cta.gold { background:var(--gold); border-color:var(--gold); color:var(--navy); }
   .pricing-cta.gold:hover { background:var(--gold-light); }
 
-  .steps-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:32px; margin-top:60px; position:relative; }
+  .steps-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:32px; margin-top:44px; position:relative; }
   .steps-grid::before { content:''; position:absolute; top:22px; left:11%; width:78%; height:1px; background:var(--border); }
   .step-item { text-align:center; position:relative; }
   .step-num { width:44px; height:44px; background:var(--white); border:2px solid var(--navy); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-family:'Libre Baskerville',serif; font-size:16px; font-weight:700; color:var(--navy); position:relative; z-index:1; }
   .step-item h4 { font-size:15px; font-weight:600; color:var(--navy); margin-bottom:8px; }
   .step-item p { font-size:13px; color:var(--text-muted); line-height:1.6; }
 
-  .compliance-section { background:var(--surface); padding:60px 48px; }
-  .compliance-inner { max-width:900px; margin:0 auto; display:flex; align-items:center; gap:64px; }
-  .compliance-text { flex:1; }
-  .compliance-badges { display:flex; flex-wrap:wrap; gap:12px; flex-shrink:0; }
-  .comp-badge { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:12px 20px; text-align:center; }
-  .comp-badge .badge-icon { font-size:20px; margin-bottom:4px; }
-  .comp-badge .badge-label { font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:var(--navy); }
-
-  .download-section { padding:80px 48px; text-align:center; }
+  .download-section { padding:64px 48px; text-align:center; }
   .download-grid { display:flex; justify-content:center; gap:16px; margin-top:40px; flex-wrap:wrap; }
   .download-btn { display:flex; align-items:center; gap:12px; background:var(--navy); color:var(--white); text-decoration:none; padding:14px 28px; border-radius:var(--radius); transition:background 0.15s; min-width:180px; }
   .download-btn:hover { background:var(--navy-light); }
@@ -184,10 +178,8 @@
     .pricing-grid { grid-template-columns:1fr; max-width:400px; }
     .steps-grid { grid-template-columns:1fr 1fr; } .steps-grid::before { display:none; }
     .footer-links-grid { grid-template-columns:repeat(2,1fr); }
-    .compliance-inner { flex-direction:column; }
-    nav { padding:0 24px; } section { padding:60px 24px; }
-    .hero { padding:64px 24px 56px; } .hero h1 { font-size:36px; }
-    .countries-band { padding:16px 24px; }
+    nav { padding:0 24px; } section { padding:56px 24px; }
+    .hero { padding:56px 24px 48px; } .hero h1 { font-size:36px; }
   }
   @media (max-width:600px) { .country-select-grid { grid-template-columns:1fr; } }
 </style>
@@ -216,6 +208,12 @@
     </a>
   </div>
 </nav>
+
+<div id="post-auth-banner" class="post-auth-banner" style="display:none">
+  <span id="post-auth-banner-text"></span>
+  <a href="#download" class="post-auth-banner-cta" onclick="dismissPostAuthBanner()">Go to Download &darr;</a>
+  <button class="post-auth-banner-close" onclick="dismissPostAuthBanner()" aria-label="Dismiss">&times;</button>
+</div>
 
 <div class="hero">
   <div class="hero-badge">Built for East Africa · 9 Countries · Offline-First</div>
@@ -248,19 +246,6 @@
   </div>
 </div>
 
-<div class="countries-band">
-  <span class="countries-label">Available in</span>
-  <div class="country-chip"><span class="flag">&#127472;&#127466;</span> Kenya</div>
-  <div class="country-chip"><span class="flag">&#127482;&#127468;</span> Uganda</div>
-  <div class="country-chip"><span class="flag">&#127481;&#127487;</span> Tanzania</div>
-  <div class="country-chip"><span class="flag">&#127479;&#127484;</span> Rwanda</div>
-  <div class="country-chip"><span class="flag">&#127463;&#127470;</span> Burundi</div>
-  <div class="country-chip"><span class="flag">&#127480;&#127480;</span> South Sudan</div>
-  <div class="country-chip"><span class="flag">&#127480;&#127476;</span> Somalia</div>
-  <div class="country-chip"><span class="flag">&#127464;&#127465;</span> DR Congo</div>
-  <div class="country-chip"><span class="flag">&#127466;&#127481;</span> Ethiopia</div>
-</div>
-
 <div class="trust-bar">
   <span class="trust-label">Statutory coverage includes</span>
   <div class="trust-items">
@@ -279,52 +264,52 @@
     <p class="section-sub">At first launch Mikaju asks which country your business operates in. The correct tax bands, social security rates, and statutory deductions load instantly — and update automatically whenever the law changes, at no extra cost.</p>
     <div class="country-select-grid">
       <div class="country-card full">
-        <span class="country-flag">&#127472;&#127466;</span>
+        <img class="country-flag" src="https://flagcdn.com/ke.svg" alt="Kenya flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Kenya</div>
         <div class="country-card-deductions">PAYE &middot; NSSF (Tier I/II) &middot; SHIF &middot; Housing Levy &middot; P9A</div>
         <span class="country-badge">Full engine</span>
       </div>
       <div class="country-card full">
-        <span class="country-flag">&#127482;&#127468;</span>
+        <img class="country-flag" src="https://flagcdn.com/ug.svg" alt="Uganda flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Uganda</div>
         <div class="country-card-deductions">PAYE &middot; NSSF (5%+10%) &middot; Local Service Tax</div>
         <span class="country-badge">Full engine</span>
       </div>
       <div class="country-card full">
-        <span class="country-flag">&#127481;&#127487;</span>
+        <img class="country-flag" src="https://flagcdn.com/tz.svg" alt="Tanzania flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Tanzania</div>
         <div class="country-card-deductions">PAYE &middot; NSSF (10%+10%) &middot; SDL &middot; WCF</div>
         <span class="country-badge">Full engine</span>
       </div>
       <div class="country-card full">
-        <span class="country-flag">&#127479;&#127484;</span>
+        <img class="country-flag" src="https://flagcdn.com/rw.svg" alt="Rwanda flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Rwanda</div>
         <div class="country-card-deductions">PAYE &middot; RSSB Pension &middot; RSSB Health Insurance</div>
         <span class="country-badge">Full engine</span>
       </div>
       <div class="country-card full">
-        <span class="country-flag">&#127466;&#127481;</span>
+        <img class="country-flag" src="https://flagcdn.com/et.svg" alt="Ethiopia flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Ethiopia</div>
         <div class="country-card-deductions">PAYE &middot; Pension (private &amp; public sector rates)</div>
         <span class="country-badge">Full engine</span>
       </div>
       <div class="country-card">
-        <span class="country-flag">&#127463;&#127470;</span>
+        <img class="country-flag" src="https://flagcdn.com/bi.svg" alt="Burundi flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Burundi</div>
         <div class="country-card-deductions">PAYE &middot; INSS (6% + 15%)</div>
       </div>
       <div class="country-card">
-        <span class="country-flag">&#127480;&#127480;</span>
+        <img class="country-flag" src="https://flagcdn.com/ss.svg" alt="South Sudan flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">South Sudan</div>
         <div class="country-card-deductions">PAYE &middot; SSPS (8% + 17%)</div>
       </div>
       <div class="country-card">
-        <span class="country-flag">&#127480;&#127476;</span>
+        <img class="country-flag" src="https://flagcdn.com/so.svg" alt="Somalia flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">Somalia</div>
         <div class="country-card-deductions">Income Tax &middot; Social Contribution</div>
       </div>
       <div class="country-card">
-        <span class="country-flag">&#127464;&#127465;</span>
+        <img class="country-flag" src="https://flagcdn.com/cd.svg" alt="DR Congo flag" loading="lazy" width="40" height="28">
         <div class="country-card-name">DR Congo</div>
         <div class="country-card-deductions">IPR &middot; INSS (5% + 13%) &middot; ONEM</div>
       </div>
@@ -415,24 +400,6 @@
   </div>
 </section>
 
-<div class="compliance-section">
-  <div class="compliance-inner">
-    <div class="compliance-text">
-      <div class="section-label">Statutory Compliance</div>
-      <h2 class="section-title" style="font-size:28px;margin-bottom:12px">Built for East African law</h2>
-      <p style="font-size:15px;color:var(--text-secondary);line-height:1.7">Every country's tax engine uses versioned rate tables. When statutory rates change, Mikaju updates at no extra cost. Historical payroll runs remain accurate even after law changes.</p>
-    </div>
-    <div class="compliance-badges">
-      <div class="comp-badge"><div class="badge-icon">&#128203;</div><div class="badge-label">PAYE</div></div>
-      <div class="comp-badge"><div class="badge-icon">&#128274;</div><div class="badge-label">Social Sec.</div></div>
-      <div class="comp-badge"><div class="badge-icon">&#127973;</div><div class="badge-label">Health</div></div>
-      <div class="comp-badge"><div class="badge-icon">&#127968;</div><div class="badge-label">Levies</div></div>
-      <div class="comp-badge"><div class="badge-icon">&#128196;</div><div class="badge-label">P9A / Certs</div></div>
-      <div class="comp-badge"><div class="badge-icon">&#127758;</div><div class="badge-label">9 Countries</div></div>
-    </div>
-  </div>
-</div>
-
 <section class="pricing-section" id="pricing">
   <div style="text-align:center">
     <div class="section-label">Transparent Pricing &middot; Billed in USD</div>
@@ -514,7 +481,7 @@
 <section class="download-section" id="download">
   <div class="section-label" style="text-align:center">Available Now</div>
   <h2 class="section-title" style="text-align:center">Download Mikaju Payroll</h2>
-  <p class="section-sub" style="margin:12px auto 0;text-align:center">Free to download. Sign in with the same account on the website or in the app — either works.</p>
+  <p class="section-sub" style="margin:12px auto 0;text-align:center">Free to download. The website handles account and plan setup — the payroll app itself runs on your desktop, offline-first.</p>
   <div style="text-align:center;margin-top:24px">
     <button id="pwa-install-btn" onclick="installPWA()" class="btn-hero-primary" style="display:none;border:none;font-family:inherit;font-size:15px;cursor:pointer">
       &#8681; Install Mikaju as an app (works right now, no download page needed)
@@ -532,7 +499,7 @@
     Still on Windows 7 or 8? Most PCs from that era are 64-bit: <a href="https://github.com/MonarCat/mikaju-payroll/releases/latest/download/Mikaju-Payroll-Setup-Win7-Win8-x64.exe" style="color:inherit;text-decoration:underline">64-bit legacy build</a>. Not sure, or it won't open? Try the <a href="https://github.com/MonarCat/mikaju-payroll/releases/latest/download/Mikaju-Payroll-Setup-Win7-Win8-ia32.exe" style="color:inherit;text-decoration:underline">32-bit legacy build</a> instead — same features, an older but compatible app runtime.
   </p>
   <p style="text-align:center;margin-top:8px;font-size:12px;color:var(--text-muted)">Installers are built automatically from source on every release — see the <a href="https://github.com/MonarCat/mikaju-payroll/releases" style="color:inherit;text-decoration:underline">releases page</a> for version history.</p>
-  <p style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted)">v1.0.0 &middot; 64-bit &middot; Auto-updates enabled &middot; Windows 10 / macOS 12 / Ubuntu 22.04+</p>
+  <p style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted)">v1.0.4 &middot; 64-bit &middot; Auto-updates enabled &middot; Windows 10 / macOS 12 / Ubuntu 22.04+</p>
 </section>
 
 <footer>
@@ -620,10 +587,34 @@
     } catch { /* malformed local value - ignore rather than block sign-in */ }
   }
 
-  function showPostAuthConfirmation(planTier) {
+  function showPostAuthBanner(html) {
     closeAuthModal();
-    alert(
-      `You're signed in. Download Mikaju and sign in with the same account to finish setting up the ${PLAN_LABELS[planTier] || planTier} plan.`
+    const banner = document.getElementById('post-auth-banner');
+    document.getElementById('post-auth-banner-text').innerHTML = html;
+    banner.style.display = 'flex';
+    sessionStorage.setItem('mikaju_seen_post_auth_banner', '1');
+  }
+
+  window.dismissPostAuthBanner = function () {
+    document.getElementById('post-auth-banner').style.display = 'none';
+  };
+
+  function showPostAuthConfirmation(planTier) {
+    showPostAuthBanner(
+      `<strong>You're signed in.</strong> Download Mikaju and sign in with the same account to finish setting up the ${PLAN_LABELS[planTier] || planTier} plan.`
+    );
+  }
+
+  // Signing in here on the website only links your account to a plan
+  // choice — it does not open the payroll app itself (there isn't one
+  // here to open). Without this, closing the modal after a plain sign-in
+  // left people staring at the homepage with no indication of what to
+  // do next. Shown once per browser session so it doesn't nag returning
+  // visitors who are just checking something quickly.
+  function showGeneralPostAuthBanner() {
+    if (sessionStorage.getItem('mikaju_seen_post_auth_banner')) { closeAuthModal(); return; }
+    showPostAuthBanner(
+      `<strong>You're signed in.</strong> Mikaju Payroll runs as a desktop app — this website is just for account and plan setup. Download it below and sign in with the same account to get started.`
     );
   }
 
@@ -716,7 +707,7 @@
     if (pendingIntentPlan) {
       await applyPendingPlanIfAny(data.session);
     } else {
-      closeAuthModal();
+      showGeneralPostAuthBanner();
     }
     return false;
   };
