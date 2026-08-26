@@ -5,13 +5,14 @@
  * The renderer never touches any of these directly — everything crosses
  * through preload.js via contextBridge IPC.
  */
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const { getSupabaseClient } = require('./supabaseClient');
 const { initDatabase, getDb, newId, writeRecord } = require('./db');
+const { getOrCreateDbKey } = require('./db/keyManager');
 const { runSync, registerPeriodicSync } = require('./sync/syncEngine');
 const { getCurrentEntitlement } = require('./license/licenseManager');
 const { calculatePayroll, COUNTRIES } = require('@mikaju/tax-engine');
@@ -239,7 +240,19 @@ function registerIpcHandlers() {
 }
 
 app.whenReady().then(() => {
-  initDatabase(app.getPath('userData'));
+  // Database encryption is a hard prerequisite, not a best-effort feature:
+  // if we can't get a key, we refuse to start rather than silently opening
+  // (or worse, creating) an unencrypted payroll database.
+  let dbKey;
+  try {
+    dbKey = getOrCreateDbKey(app.getPath('userData'));
+    initDatabase(app.getPath('userData'), dbKey);
+  } catch (err) {
+    dialog.showErrorBox('Mikaju Payroll — cannot start', err.message);
+    app.quit();
+    return;
+  }
+
   registerIpcHandlers();
   createWindow();
 

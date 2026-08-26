@@ -19,7 +19,7 @@
   "dependencies": {
     "@mikaju/tax-engine": "^1.0.0",
     "@supabase/supabase-js": "^2.45.4",
-    "better-sqlite3": "^13.0.3",
+    "better-sqlite3-multiple-ciphers": "^13.0.3",
     "dotenv": "^16.4.5",
     "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
