@@ -20,6 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3-multiple-ciphers');
 const crypto = require('crypto');
+const { runMigrations } = require('./migrations');
 
 let _db = null;
 
@@ -187,6 +188,7 @@ function initDatabase(userDataPath, dbKey) {
   _db.pragma('journal_mode = WAL');
   _db.pragma('foreign_keys = ON');
   _db.exec(SCHEMA);
+  runMigrations(_db);
   return _db;
 }
 
@@ -196,34 +198,59 @@ function getDb() {
 }
 
 /**
+ * Applies one write (insert/update/delete) plus its sync_queue entry.
+ * No transaction of its own — callers (writeRecord for a single record,
+ * writeRecordsAtomic for several) are responsible for wrapping this in one.
+ */
+function _applyWrite(db, tableName, op, record) {
+  if (op === 'insert') {
+    const cols = Object.keys(record);
+    const placeholders = cols.map(() => '?').join(',');
+    db.prepare(`insert into ${tableName} (${cols.join(',')}) values (${placeholders})`)
+      .run(...cols.map((c) => record[c]));
+  } else if (op === 'update') {
+    const cols = Object.keys(record).filter((c) => c !== 'id');
+    const setClause = cols.map((c) => `${c} = ?`).join(', ');
+    db.prepare(`update ${tableName} set ${setClause} where id = ?`)
+      .run(...cols.map((c) => record[c]), record.id);
+  } else if (op === 'delete') {
+    db.prepare(`delete from ${tableName} where id = ?`).run(record.id);
+  } else {
+    throw new Error(`Unknown op "${op}"`);
+  }
+
+  db.prepare(
+    `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
+  ).run(tableName, op, record.id, JSON.stringify(record), new Date().toISOString());
+}
+
+/**
  * Writes a record locally AND enqueues it for remote sync, in one
  * transaction, so we never end up with a local write that silently never
  * makes it to Supabase.
  */
 function writeRecord(tableName, op, record) {
   const db = getDb();
-  const tx = db.transaction(() => {
-    if (op === 'insert') {
-      const cols = Object.keys(record);
-      const placeholders = cols.map(() => '?').join(',');
-      db.prepare(`insert into ${tableName} (${cols.join(',')}) values (${placeholders})`)
-        .run(...cols.map((c) => record[c]));
-    } else if (op === 'update') {
-      const cols = Object.keys(record).filter((c) => c !== 'id');
-      const setClause = cols.map((c) => `${c} = ?`).join(', ');
-      db.prepare(`update ${tableName} set ${setClause} where id = ?`)
-        .run(...cols.map((c) => record[c]), record.id);
-    } else if (op === 'delete') {
-      db.prepare(`delete from ${tableName} where id = ?`).run(record.id);
-    } else {
-      throw new Error(`Unknown op "${op}"`);
-    }
+  const tx = db.transaction(() => _applyWrite(db, tableName, op, record));
+  tx();
+}
 
-    db.prepare(
-      `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
-    ).run(tableName, op, record.id, JSON.stringify(record), new Date().toISOString());
+/**
+ * Same guarantee as writeRecord, but for several writes that must succeed
+ * or fail together — e.g. regenerating a payroll run's payslips (delete
+ * the old ones, insert the new ones, mark the run reviewed). Without this,
+ * a crash partway through leaves some employees with a payslip for the
+ * period and others without one, with no way to tell which happened short
+ * of manually diffing the table.
+ */
+function writeRecordsAtomic(ops) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    for (const { tableName, op, record } of ops) {
+      _applyWrite(db, tableName, op, record);
+    }
   });
   tx();
 }
 
-module.exports = { initDatabase, getDb, newId, writeRecord };
+module.exports = { initDatabase, getDb, newId, writeRecord, writeRecordsAtomic };
