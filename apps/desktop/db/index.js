@@ -8,10 +8,17 @@
  * Schema mirrors the `mikaju` Postgres schema closely enough that pulled
  * rows can be upserted with minimal transformation, but this is SQLite —
  * types are simplified (TEXT for ids/timestamps, INTEGER for booleans).
+ *
+ * ENCRYPTION: this file contains national IDs, tax PINs, bank details, and
+ * salaries, so the database itself is encrypted at rest (SQLite3 Multiple
+ * Ciphers, a drop-in for better-sqlite3). The encryption key never lives
+ * here — it's handed to initDatabase() by the caller (see main.js), which
+ * gets it from db/keyManager.js. This module only knows what to do with a
+ * key once it has one; it never generates or stores one itself.
  */
 const path = require('path');
 const fs = require('fs');
-const Database = require('better-sqlite3');
+const Database = require('better-sqlite3-multiple-ciphers');
 const crypto = require('crypto');
 
 let _db = null;
@@ -98,10 +105,85 @@ create table if not exists sync_queue (
 );
 `;
 
-function initDatabase(userDataPath) {
+function assertValidKey(dbKey) {
+  if (typeof dbKey !== 'string' || !/^[0-9a-f]{64}$/i.test(dbKey)) {
+    throw new Error('Database key must be a 64-character hex string. Refusing to open the database with a malformed key.');
+  }
+}
+
+/**
+ * A plaintext (pre-encryption) SQLite file opens and queries fine with NO
+ * key set at all. An encrypted file's header won't parse without the
+ * right key, so the same query throws. That difference is how we tell
+ * "never encrypted yet" apart from "already encrypted", instead of
+ * guessing from an app-version flag that could itself be wrong or missing.
+ */
+function isLegacyPlaintextDb(dbPath) {
+  let probe;
+  try {
+    probe = new Database(dbPath, { readonly: true });
+    probe.prepare('select count(*) as n from sqlite_master').get();
+    return true;
+  } catch {
+    return false;
+  } finally {
+    if (probe) probe.close();
+  }
+}
+
+/**
+ * One-time migration for installs that predate database encryption.
+ * `PRAGMA rekey` encrypts an already-open plaintext database in place.
+ * We still copy the original file out first, before touching anything,
+ * so a failed or interrupted rekey can never leave an admin with neither
+ * a readable plaintext copy nor a working encrypted one. The backup is
+ * never auto-deleted — that's a manual cleanup decision, not ours to make.
+ */
+function migrateLegacyPlaintextDb(dbPath, dbKey) {
+  const backupPath = `${dbPath}.pre-encryption-backup-${Date.now()}`;
+  fs.copyFileSync(dbPath, backupPath);
+
+  const legacyDb = new Database(dbPath);
+  try {
+    legacyDb.pragma(`rekey='${dbKey}'`);
+  } finally {
+    legacyDb.close();
+  }
+
+  console.log(`[db] Migrated existing unencrypted database to encrypted storage. Original kept at: ${backupPath}`);
+  return backupPath;
+}
+
+function openEncrypted(dbPath, dbKey) {
+  const db = new Database(dbPath);
+  db.pragma(`key='${dbKey}'`);
+  try {
+    // Forces SQLite3 Multiple Ciphers to actually parse the file header
+    // now, with this key, instead of lazily failing on the first real
+    // query somewhere deep in the app later.
+    db.prepare('select count(*) as n from sqlite_master').get();
+  } catch (err) {
+    db.close();
+    throw new Error(
+      'Could not open the payroll database with the stored encryption key. ' +
+      'The key file may be corrupted or missing its OS keychain protection, ' +
+      'or the database file may have been tampered with. Do not delete ' +
+      `either file — contact support before doing anything else. (${err.message})`
+    );
+  }
+  return db;
+}
+
+function initDatabase(userDataPath, dbKey) {
+  assertValidKey(dbKey);
   const dbPath = path.join(userDataPath, 'mikaju.db');
   fs.mkdirSync(userDataPath, { recursive: true });
-  _db = new Database(dbPath);
+
+  if (fs.existsSync(dbPath) && isLegacyPlaintextDb(dbPath)) {
+    migrateLegacyPlaintextDb(dbPath, dbKey);
+  }
+
+  _db = openEncrypted(dbPath, dbKey);
   _db.pragma('journal_mode = WAL');
   _db.pragma('foreign_keys = ON');
   _db.exec(SCHEMA);
