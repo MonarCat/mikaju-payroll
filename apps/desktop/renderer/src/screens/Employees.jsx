@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCompany } from '../lib/CompanyContext';
 
-const emptyForm = { full_name: '', national_id: '', tax_pin: '', bank_name: '', bank_account: '', gross_pay: '' };
+const emptyForm = { full_name: '', id_number: '', kra_pin: '', bank_name: '', bank_account: '', basic_salary: '' };
 
 export default function Employees() {
   const { company } = useCompany();
@@ -23,11 +23,11 @@ export default function Employees() {
     setEditingId(emp.id);
     setForm({
       full_name: emp.full_name,
-      national_id: emp.national_id || '',
-      tax_pin: emp.tax_pin || '',
+      id_number: emp.id_number || '',
+      kra_pin: emp.kra_pin || '',
       bank_name: emp.bank_name || '',
       bank_account: emp.bank_account || '',
-      gross_pay: String(emp.gross_pay),
+      basic_salary: String(emp.basic_salary),
     });
   }
 
@@ -40,13 +40,13 @@ export default function Employees() {
     e.preventDefault();
     setError(null);
 
-    const grossPay = Number(form.gross_pay);
+    const basicSalary = Number(form.basic_salary);
     if (!form.full_name.trim()) { setError('Full name is required.'); return; }
-    if (!Number.isFinite(grossPay) || grossPay <= 0) { setError('Gross pay must be a positive number.'); return; }
+    if (!Number.isFinite(basicSalary) || basicSalary <= 0) { setError('Basic salary must be a positive number.'); return; }
 
     setSubmitting(true);
     try {
-      const payload = { ...form, gross_pay: grossPay, company_id: company.id };
+      const payload = { ...form, basic_salary: basicSalary, company_id: company.id };
       if (editingId) {
         await window.mikaju.employees.update({ id: editingId, ...payload });
       } else {
@@ -69,13 +69,13 @@ export default function Employees() {
 
       <table className="mk-table" style={{ marginBottom: 28 }}>
         <thead>
-          <tr><th>Name</th><th>Gross pay</th><th>Bank</th><th></th></tr>
+          <tr><th>Name</th><th>Basic salary</th><th>Bank</th><th></th></tr>
         </thead>
         <tbody>
           {employees.map((emp) => (
             <tr key={emp.id}>
               <td>{emp.full_name}</td>
-              <td>{emp.gross_pay.toLocaleString()}</td>
+              <td>{emp.basic_salary.toLocaleString()}</td>
               <td>{emp.bank_name || '—'}</td>
               <td><button className="mk-btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => startEdit(emp)}>Edit</button></td>
             </tr>
@@ -95,16 +95,16 @@ export default function Employees() {
           <input id="full_name" required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
         </div>
         <div className="mk-field">
-          <label htmlFor="national_id">National ID</label>
-          <input id="national_id" value={form.national_id} onChange={(e) => setForm({ ...form, national_id: e.target.value })} />
+          <label htmlFor="id_number">National ID</label>
+          <input id="id_number" value={form.id_number} onChange={(e) => setForm({ ...form, id_number: e.target.value })} />
         </div>
         <div className="mk-field">
-          <label htmlFor="tax_pin">Tax PIN</label>
-          <input id="tax_pin" value={form.tax_pin} onChange={(e) => setForm({ ...form, tax_pin: e.target.value })} />
+          <label htmlFor="kra_pin">Tax PIN</label>
+          <input id="kra_pin" value={form.kra_pin} onChange={(e) => setForm({ ...form, kra_pin: e.target.value })} />
         </div>
         <div className="mk-field">
-          <label htmlFor="gross_pay">Gross pay (monthly, {company.currency_hint || ''})</label>
-          <input id="gross_pay" type="number" min="0" step="0.01" required value={form.gross_pay} onChange={(e) => setForm({ ...form, gross_pay: e.target.value })} />
+          <label htmlFor="basic_salary">Basic salary (monthly, {company.currency_hint || ''})</label>
+          <input id="basic_salary" type="number" min="0" step="0.01" required value={form.basic_salary} onChange={(e) => setForm({ ...form, basic_salary: e.target.value })} />
         </div>
         <div className="mk-field">
           <label htmlFor="bank_name">Bank name</label>
