@@ -11,7 +11,7 @@ const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const { getSupabaseClient } = require('./supabaseClient');
-const { initDatabase, getDb, newId, writeRecord } = require('./db');
+const { initDatabase, getDb, newId, writeRecord, writeRecordsAtomic } = require('./db');
 const { getOrCreateDbKey } = require('./db/keyManager');
 const { runSync, registerPeriodicSync } = require('./sync/syncEngine');
 const { getCurrentEntitlement } = require('./license/licenseManager');
@@ -21,6 +21,7 @@ const { generatePayslipPdf } = require('./pdf/payslipGenerator');
 const isDev = !app.isPackaged;
 let mainWindow;
 let activeCompanyId = null;
+let activeUserId = null;
 let periodicSyncHandle = null;
 
 function createWindow() {
@@ -89,15 +90,34 @@ function registerIpcHandlers() {
     return record;
   });
 
-  ipcMain.handle('payrollRuns:list', (_e, companyId) =>
-    getDb().prepare('select * from payroll_runs where company_id = ? order by period_year desc, period_month desc')
-      .all(companyId)
-  );
+  ipcMain.handle('payrollRuns:list', () => {
+    if (!activeCompanyId) return [];
+    return getDb().prepare('select * from payroll_runs where company_id = ? order by period_year desc, period_month desc')
+      .all(activeCompanyId);
+  });
 
-  ipcMain.handle('payrollRuns:create', (_e, { companyId, periodMonth, periodYear }) => {
+  // company_id is the ACTIVE company tracked by main.js, not whatever the
+  // renderer happens to pass — a payroll run for the wrong company is
+  // exactly the kind of bug that should be impossible by construction,
+  // not just "the UI wouldn't normally do that".
+  ipcMain.handle('payrollRuns:create', (_e, { periodMonth, periodYear }) => {
+    if (!activeCompanyId) throw new Error('No active company selected.');
     const now = new Date().toISOString();
-    const record = { id: newId(), company_id: companyId, period_month: periodMonth, period_year: periodYear, status: 'draft', approved_by: null, approved_at: null, created_at: now, updated_at: now };
-    writeRecord('payroll_runs', 'insert', record);
+    const record = {
+      id: newId(), company_id: activeCompanyId, period_month: periodMonth, period_year: periodYear,
+      status: 'draft', approved_by: null, approved_at: null, created_at: now, updated_at: now,
+    };
+    try {
+      writeRecord('payroll_runs', 'insert', record);
+    } catch (err) {
+      // Translates the raw UNIQUE(company_id, period_year, period_month)
+      // constraint (see db/migrations.js) into something a payroll admin
+      // can actually act on, instead of a bare SQLite error string.
+      if (/UNIQUE constraint failed/.test(err.message)) {
+        throw new Error(`A payroll run for ${periodMonth}/${periodYear} already exists for this company.`);
+      }
+      throw err;
+    }
     return record;
   });
 
@@ -108,29 +128,44 @@ function registerIpcHandlers() {
     return calculatePayroll({ grossPay, ...options }, countryCode);
   });
 
-  // Generates (or regenerates, while the run is still 'draft') a payslip
-  // row per active employee for a run, using each employee's current
-  // gross pay and the company's country. Does NOT lock the run — that is
-  // a separate, explicit approval step so a run can be reviewed first.
-  ipcMain.handle('payslips:generateForRun', (_e, { payrollRunId, companyId, countryCode }) => {
-    const run = getDb().prepare('select status from payroll_runs where id = ?').get(payrollRunId);
-    if (run && run.status === 'locked') {
+  // Generates (or regenerates, while the run isn't locked) a payslip row
+  // per active employee for a run, using each employee's current gross
+  // pay and the company's country. Does NOT lock the run — that is a
+  // separate, explicit approval step so a run can be reviewed first.
+  //
+  // country_code is looked up from the run's own company record here,
+  // never accepted from the renderer: a payroll run belongs to exactly
+  // one company, and that company has exactly one country. Letting a
+  // caller pass a different countryCode is how you get a Kenyan
+  // employee's payslip calculated under Ugandan tax rules.
+  //
+  // The delete-old / insert-new / mark-reviewed sequence is one atomic
+  // transaction (writeRecordsAtomic) — a crash or forced quit partway
+  // through leaves the run exactly as it was before this call, never a
+  // run with payslips for some employees and not others.
+  ipcMain.handle('payslips:generateForRun', (_e, { payrollRunId }) => {
+    const db = getDb();
+    const run = db.prepare('select * from payroll_runs where id = ?').get(payrollRunId);
+    if (!run) throw new Error('Payroll run not found.');
+    if (run.company_id !== activeCompanyId) {
+      throw new Error('This payroll run does not belong to the active company.');
+    }
+    if (run.status === 'locked') {
       throw new Error('This payroll run is locked and approved — it cannot be recalculated. Create a new run instead.');
     }
 
-    // Regeneration replaces prior draft payslips for this run rather than
-    // duplicating them, so re-running the wizard after editing an
-    // employee's gross pay reflects the correction instead of adding rows.
-    // Goes through writeRecord (not a raw DELETE) so the deletion is queued
-    // for remote sync too, not just applied locally.
-    const priorPayslips = getDb().prepare('select id from payslips where payroll_run_id = ?').all(payrollRunId);
-    for (const p of priorPayslips) writeRecord('payslips', 'delete', { id: p.id });
+    const company = db.prepare('select * from companies where id = ?').get(run.company_id);
+    if (!company) throw new Error('Company record for this payroll run is missing.');
+    const countryCode = company.country_code;
 
-    const employees = getDb()
+    const priorPayslips = db.prepare('select id from payslips where payroll_run_id = ?').all(payrollRunId);
+    const employees = db
       .prepare('select * from employees where company_id = ? and status = ?')
-      .all(companyId, 'active');
+      .all(run.company_id, 'active');
 
     const now = new Date().toISOString();
+    const ops = priorPayslips.map((p) => ({ tableName: 'payslips', op: 'delete', record: { id: p.id } }));
+
     const payslips = employees.map((employee) => {
       const breakdown = calculatePayroll({ grossPay: employee.gross_pay }, countryCode);
       const record = {
@@ -143,15 +178,13 @@ function registerIpcHandlers() {
         created_at: now,
         updated_at: now,
       };
-      writeRecord('payslips', 'insert', record);
+      ops.push({ tableName: 'payslips', op: 'insert', record });
       return record;
     });
 
-    writeRecord('payroll_runs', 'update', {
-      id: payrollRunId,
-      status: 'reviewed',
-      updated_at: now,
-    });
+    ops.push({ tableName: 'payroll_runs', op: 'update', record: { id: payrollRunId, status: 'reviewed', updated_at: now } });
+
+    writeRecordsAtomic(ops);
 
     return payslips;
   });
@@ -159,9 +192,37 @@ function registerIpcHandlers() {
   // Approval is the final, irreversible step: it also locks the run.
   // Once locked, payslips.generateForRun refuses to touch that run again
   // (see the guard there) — a locked run's numbers are what got paid.
-  ipcMain.handle('payrollRuns:approve', (_e, { payrollRunId, approvedBy }) => {
+  //
+  // approved_by is the authenticated user id from the Supabase session
+  // forwarded via auth:sessionChanged (see below), never a value the
+  // renderer supplies — "approved by company X" isn't an audit trail,
+  // "approved by user <uuid>, signed in as <email>" is.
+  ipcMain.handle('payrollRuns:approve', (_e, { payrollRunId }) => {
+    if (!activeUserId) throw new Error('You must be signed in to approve a payroll run.');
+
+    const db = getDb();
+    const run = db.prepare('select * from payroll_runs where id = ?').get(payrollRunId);
+    if (!run) throw new Error('Payroll run not found.');
+    if (run.company_id !== activeCompanyId) {
+      throw new Error('This payroll run does not belong to the active company.');
+    }
+    if (run.status === 'locked') throw new Error('This payroll run is already approved and locked.');
+    if (run.status !== 'reviewed') throw new Error('Calculate this payroll run before approving it.');
+
+    const payslipCount = db.prepare('select count(*) as n from payslips where payroll_run_id = ?').get(payrollRunId).n;
+    const activeEmployeeCount = db
+      .prepare('select count(*) as n from employees where company_id = ? and status = ?')
+      .get(run.company_id, 'active').n;
+    if (payslipCount === 0) throw new Error('This payroll run has no payslips yet — calculate it first.');
+    if (payslipCount !== activeEmployeeCount) {
+      throw new Error(
+        `This run has payslips for ${payslipCount} of ${activeEmployeeCount} active employees — ` +
+        'recalculate the run before approving (an employee may have been added or reactivated since).'
+      );
+    }
+
     const now = new Date().toISOString();
-    const record = { id: payrollRunId, status: 'locked', approved_by: approvedBy, approved_at: now, updated_at: now };
+    const record = { id: payrollRunId, status: 'locked', approved_by: activeUserId, approved_at: now, updated_at: now };
     writeRecord('payroll_runs', 'update', record);
     return record;
   });
@@ -228,6 +289,7 @@ function registerIpcHandlers() {
   // never has a real user JWT, and any RLS-scoped call it makes — most
   // importantly license-issue — fails with 401 every time, silently.
   ipcMain.on('auth:sessionChanged', (_e, session) => {
+    activeUserId = session?.user?.id || null;
     const supabase = getSupabaseClient();
     if (!supabase) return;
     if (session?.access_token && session?.refresh_token) {

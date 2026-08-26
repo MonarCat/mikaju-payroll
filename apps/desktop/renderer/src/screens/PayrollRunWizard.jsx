@@ -27,12 +27,8 @@ export default function PayrollRunWizard() {
     setError(null);
     setBusy(true);
     try {
-      const newRun = await window.mikaju.payrollRuns.create({ companyId: company.id, periodMonth, periodYear });
-      const generated = await window.mikaju.payslips.generateForRun({
-        payrollRunId: newRun.id,
-        companyId: company.id,
-        countryCode: company.country_code,
-      });
+      const newRun = await window.mikaju.payrollRuns.create({ periodMonth, periodYear });
+      const generated = await window.mikaju.payslips.generateForRun({ payrollRunId: newRun.id });
       setRun({ ...newRun, status: 'reviewed' });
       setPayslips(generated);
     } catch (err) {
@@ -46,7 +42,7 @@ export default function PayrollRunWizard() {
     setBusy(true);
     setError(null);
     try {
-      const approved = await window.mikaju.payrollRuns.approve({ payrollRunId: run.id, approvedBy: company.id });
+      const approved = await window.mikaju.payrollRuns.approve({ payrollRunId: run.id });
       setRun({ ...run, ...approved });
     } catch (err) {
       setError(err.message || 'Could not approve this run.');
