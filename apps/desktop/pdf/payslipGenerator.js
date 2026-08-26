@@ -1,9 +1,9 @@
 /**
  * Payslip PDF generator — Mikaju Payroll.
  *
- * Takes the frozen breakdown_json from a payslip row (the exact output of
- * calculatePayroll() at the moment the run was calculated — never
- * recalculated here) and renders it to a PDF.
+ * Takes the frozen calculation_snapshot from a payslip row (the exact
+ * output of calculatePayroll() at the moment the run was calculated —
+ * never recalculated here) and renders it to a PDF.
  *
  * Works generically across all 9 country modules without per-country
  * templates. Every country's statutoryDeductions sub-object exposes a
@@ -35,9 +35,9 @@ const PAGE_HEIGHT = 841.89;
 const MARGIN = 48;
 
 async function generatePayslipPdf({ company, employee, payslip, plan, periodLabel }) {
-  const breakdown = typeof payslip.breakdown_json === 'string'
-    ? JSON.parse(payslip.breakdown_json)
-    : payslip.breakdown_json;
+  const breakdown = typeof payslip.calculation_snapshot === 'string'
+    ? JSON.parse(payslip.calculation_snapshot)
+    : payslip.calculation_snapshot;
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.setTitle(`Payslip — ${employee.full_name} — ${periodLabel}`);
@@ -105,7 +105,7 @@ async function generatePayslipPdf({ company, employee, payslip, plan, periodLabe
   text(employee.full_name, MARGIN, 12, bold, ink);
   text(`Country: ${breakdown.country}  ·  Currency: ${breakdown.currency}`, col2, 11, font, ink);
   newLine(16);
-  if (employee.national_id) { text(`National ID: ${employee.national_id}`, MARGIN, 10, font, muted); }
+  if (employee.id_number) { text(`National ID: ${employee.id_number}`, MARGIN, 10, font, muted); }
   if (employee.bank_name) { text(`Bank: ${employee.bank_name}${employee.bank_account ? ' — ' + employee.bank_account : ''}`, col2, 10, font, muted); }
   newLine(24);
   hr();

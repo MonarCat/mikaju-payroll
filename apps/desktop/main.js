@@ -18,6 +18,61 @@ const { getCurrentEntitlement } = require('./license/licenseManager');
 const { calculatePayroll, COUNTRIES } = require('@mikaju/tax-engine');
 const { generatePayslipPdf } = require('./pdf/payslipGenerator');
 
+function round2(v) {
+  return Math.round(v * 100) / 100;
+}
+
+/**
+ * employees.other_allowances is stored as a JSON array of
+ * { label, amount } (or similar) objects, matching the cloud schema's
+ * jsonb column. Sums the amounts for use as part of gross pay. Returns
+ * 0 for anything that isn't a clean array — a malformed value here
+ * should never block payroll calculation.
+ */
+function safeParseAmountList(jsonText) {
+  try {
+    const list = JSON.parse(jsonText || '[]');
+    if (!Array.isArray(list)) return 0;
+    return list.reduce((sum, item) => sum + (Number(item?.amount) || 0), 0);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Unpacks a calculatePayroll() breakdown into the payslips table's
+ * structured columns (matching the cloud schema, which breaks each
+ * statutory deduction into its own column rather than one JSON blob).
+ * This assumes the Kenya-shaped breakdown
+ * (statutoryDeductions.{nssf,shif,ahl,paye}) — the only country this
+ * product currently issues real payroll for. Every structured field
+ * defaults to 0 if a different country module's breakdown doesn't use
+ * that shape, but calculation_snapshot always keeps the FULL original
+ * breakdown regardless, so nothing is lost even then — see the matching
+ * note in db/migrations.js's payslips migration.
+ */
+function buildPayslipRecord(payrollRunId, employeeId, breakdown, now) {
+  const sd = breakdown.statutoryDeductions || {};
+  return {
+    id: newId(),
+    payroll_run_id: payrollRunId,
+    employee_id: employeeId,
+    gross_pay: breakdown.grossPay,
+    pensionable_pay: breakdown.grossPay,
+    nssf_employee: sd.nssf?.totalEmployee ?? 0,
+    nssf_employer: sd.nssf?.totalEmployer ?? 0,
+    shif: sd.shif?.employee ?? 0,
+    housing_levy_employee: sd.ahl?.employee ?? 0,
+    housing_levy_employer: sd.ahl?.employer ?? 0,
+    paye: sd.paye?.employee ?? 0,
+    other_deductions: JSON.stringify(breakdown.otherDeductions || []),
+    net_pay: breakdown.netPay,
+    employer_cost: breakdown.employerCost,
+    calculation_snapshot: JSON.stringify(breakdown),
+    created_at: now,
+  };
+}
+
 const isDev = !app.isPackaged;
 let mainWindow;
 let activeCompanyId = null;
@@ -52,7 +107,7 @@ function registerIpcHandlers() {
 
   ipcMain.handle('companies:create', (_e, company) => {
     const now = new Date().toISOString();
-    const record = { id: newId(), version: 1, created_at: now, updated_at: now, ...company };
+    const record = { id: newId(), created_at: now, updated_at: now, ...company };
     writeRecord('companies', 'insert', record);
     activeCompanyId = record.id;
     getDb().prepare(
@@ -167,22 +222,20 @@ function registerIpcHandlers() {
     const ops = priorPayslips.map((p) => ({ tableName: 'payslips', op: 'delete', record: { id: p.id } }));
 
     const payslips = employees.map((employee) => {
-      const breakdown = calculatePayroll({ grossPay: employee.gross_pay }, countryCode);
-      const record = {
-        id: newId(),
-        payroll_run_id: payrollRunId,
-        employee_id: employee.id,
-        breakdown_json: JSON.stringify(breakdown),
-        net_pay: breakdown.netPay,
-        version: 1,
-        created_at: now,
-        updated_at: now,
-      };
+      // Gross pay is basic salary plus housing allowance plus any other
+      // allowances — the tax engine only ever sees one combined number,
+      // matching how basic_salary/housing_allowance/other_allowances are
+      // split out for record-keeping but taxed together.
+      const otherAllowancesTotal = safeParseAmountList(employee.other_allowances);
+      const grossPay = round2(employee.basic_salary + employee.housing_allowance + otherAllowancesTotal);
+
+      const breakdown = calculatePayroll({ grossPay }, countryCode);
+      const record = buildPayslipRecord(payrollRunId, employee.id, breakdown, now);
       ops.push({ tableName: 'payslips', op: 'insert', record });
       return record;
     });
 
-    ops.push({ tableName: 'payroll_runs', op: 'update', record: { id: payrollRunId, status: 'reviewed', updated_at: now } });
+    ops.push({ tableName: 'payroll_runs', op: 'update', record: { id: payrollRunId, status: 'approved', updated_at: now } });
 
     writeRecordsAtomic(ops);
 
@@ -207,7 +260,7 @@ function registerIpcHandlers() {
       throw new Error('This payroll run does not belong to the active company.');
     }
     if (run.status === 'locked') throw new Error('This payroll run is already approved and locked.');
-    if (run.status !== 'reviewed') throw new Error('Calculate this payroll run before approving it.');
+    if (run.status !== 'approved') throw new Error('Calculate this payroll run before approving it.');
 
     const payslipCount = db.prepare('select count(*) as n from payslips where payroll_run_id = ?').get(payrollRunId).n;
     const activeEmployeeCount = db

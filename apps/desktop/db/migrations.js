@@ -16,7 +16,7 @@
  * a human, not to a migration running silently at startup.
  */
 
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 function getSchemaVersion(db) {
   const row = db.prepare("select value from app_meta where key = 'schema_version'").get();
@@ -116,8 +116,217 @@ function migrateToV2(db) {
   }
 }
 
+/**
+ * v3: aligns the local schema to the actual cloud `mikaju` schema in
+ * Supabase, column-for-column. Before this, the two had drifted apart —
+ * different names for the same field (national_id vs id_number,
+ * tax_pin vs kra_pin, gross_pay vs basic_salary), different shapes
+ * entirely for payslips (one JSON blob locally vs individual statutory
+ * columns in the cloud), and even different status values for
+ * payroll_runs ('reviewed' locally, 'approved' in the cloud). The sync
+ * engine's upsert() calls were sending payloads whose columns didn't
+ * exist on the other side — meaning every push to Supabase for these
+ * tables was effectively broken, quietly, regardless of the RLS gaps
+ * fixed separately in Workstream 4.
+ *
+ * companies, employees, and payroll_runs are simple renames/additions —
+ * done as one INSERT ... SELECT per table. payslips is not a simple
+ * rename: the cloud schema breaks each statutory deduction into its own
+ * column instead of one JSON blob, so existing rows are read into JS,
+ * unpacked, and re-inserted individually. The full original breakdown is
+ * still kept (renamed to calculation_snapshot, matching the cloud
+ * column) so nothing is lost even where the structured extraction below
+ * doesn't apply cleanly (e.g. a non-Kenya country whose breakdown shape
+ * doesn't use nssf/shif/ahl/paye keys) — see the fallback comment below.
+ */
+function migrateToV3(db) {
+  // --- companies: add cloud-only columns, drop local-only `version` ---
+  db.exec(`
+    create table companies_v3 (
+      id                          text primary key,
+      name                        text not null,
+      country_code                text not null default 'KE',
+      kra_pin                     text,
+      industry                    text,
+      logo_url                    text,
+      plan_tier                   text not null default 'free' check (plan_tier in ('free','basic','enterprise')),
+      billing_cycle               text check (billing_cycle in ('monthly','yearly')),
+      subscription_status         text not null default 'active' check (subscription_status in ('active','past_due','cancelled')),
+      paystack_customer_code      text,
+      paystack_subscription_code  text,
+      trial_ends_at               text,
+      created_at                  text not null,
+      updated_at                  text not null
+    );
+    insert into companies_v3 (
+      id, name, country_code, kra_pin, logo_url, plan_tier, billing_cycle,
+      subscription_status, paystack_subscription_code, created_at, updated_at
+    )
+    select id, name, country_code, kra_pin, logo_url, plan_tier, billing_cycle,
+           subscription_status, paystack_subscription_code, created_at, updated_at
+    from companies;
+    drop table companies;
+    alter table companies_v3 rename to companies;
+  `);
+
+  // --- employees: rename fields to match cloud, add new compensation/HR columns ---
+  const badGrossPay = db.prepare('select count(*) as n from employees where gross_pay < 0').get().n;
+  const basicSalaryCheck = badGrossPay > 0 ? '' : 'check (basic_salary >= 0)';
+  if (badGrossPay > 0) {
+    console.warn(
+      `[db migration v3] "basic_salary >= 0" constraint left unenforced: ${badGrossPay} existing ` +
+      'employee row(s) have a negative gross_pay. Fix that data, then it will be enforced on next restart.'
+    );
+  }
+  db.exec(`
+    create table employees_v3 (
+      id                                 text primary key,
+      company_id                         text not null references companies(id),
+      full_name                          text not null,
+      id_number                         text,
+      kra_pin                            text,
+      nssf_number                        text,
+      shif_number                        text,
+      bank_name                          text,
+      bank_account                       text,
+      phone                              text,
+      email                              text,
+      job_title                          text,
+      employment_type                    text not null default 'permanent' check (employment_type in ('permanent','contract','casual')),
+      basic_salary                       real not null default 0 ${basicSalaryCheck},
+      housing_allowance                  real not null default 0,
+      other_allowances                   text not null default '[]',
+      is_pwd                             integer not null default 0,
+      pwd_exemption_certificate_number   text,
+      date_joined                        text not null,
+      date_exited                        text,
+      status                             text not null default 'active' check (status in ('active','exited')),
+      version                            integer not null default 1,
+      created_at                         text not null,
+      updated_at                         text not null
+    );
+    insert into employees_v3 (
+      id, company_id, full_name, id_number, kra_pin, nssf_number, bank_name, bank_account,
+      basic_salary, date_joined, status, version, created_at, updated_at
+    )
+    select id, company_id, full_name, national_id, tax_pin, ssnit_or_equiv, bank_name, bank_account,
+           gross_pay, substr(created_at, 1, 10), status, version, created_at, updated_at
+    from employees;
+    drop table employees;
+    alter table employees_v3 rename to employees;
+    create index if not exists idx_employees_company on employees(company_id);
+  `);
+
+  // --- payroll_runs: rename 'reviewed' -> 'approved' to match cloud's enum, drop local-only `version` ---
+  const unexpectedStatuses = db
+    .prepare("select distinct status from payroll_runs where status not in ('draft','reviewed','locked')")
+    .all();
+  if (unexpectedStatuses.length > 0) {
+    console.warn(
+      `[db migration v3] Unexpected payroll_runs.status value(s) found: ${unexpectedStatuses.map(r => r.status).join(', ')}. ` +
+      'These rows are kept as-is; the status CHECK constraint may reject them on the next write.'
+    );
+  }
+  db.exec(`
+    create table payroll_runs_v3 (
+      id             text primary key,
+      company_id     text not null references companies(id),
+      period_month   integer not null check (period_month between 1 and 12),
+      period_year    integer not null,
+      status         text not null default 'draft' check (status in ('draft','approved','locked')),
+      approved_by    text,
+      approved_at    text,
+      created_at     text not null,
+      updated_at     text not null,
+      unique (company_id, period_month, period_year)
+    );
+    insert into payroll_runs_v3 (id, company_id, period_month, period_year, status, approved_by, approved_at, created_at, updated_at)
+    select id, company_id, period_month, period_year,
+           case status when 'reviewed' then 'approved' else status end,
+           approved_by, approved_at, created_at, updated_at
+    from payroll_runs;
+    drop table payroll_runs;
+    alter table payroll_runs_v3 rename to payroll_runs;
+    create index if not exists idx_payroll_runs_company on payroll_runs(company_id);
+  `);
+
+  // --- payslips: unpack breakdown_json into the cloud's structured columns ---
+  db.exec(`
+    create table payslips_v3 (
+      id                     text primary key,
+      payroll_run_id         text not null references payroll_runs(id),
+      employee_id            text not null references employees(id),
+      gross_pay              real not null,
+      pensionable_pay        real not null,
+      nssf_employee          real not null default 0,
+      nssf_employer          real not null default 0,
+      shif                   real not null default 0,
+      housing_levy_employee  real not null default 0,
+      housing_levy_employer  real not null default 0,
+      paye                   real not null default 0,
+      other_deductions       text not null default '[]',
+      net_pay                real not null,
+      employer_cost          real not null,
+      calculation_snapshot   text not null,
+      created_at             text not null,
+      unique (payroll_run_id, employee_id)
+    );
+  `);
+
+  const oldPayslips = db.prepare('select * from payslips').all();
+  const insertV3Payslip = db.prepare(`
+    insert into payslips_v3 (
+      id, payroll_run_id, employee_id, gross_pay, pensionable_pay,
+      nssf_employee, nssf_employer, shif, housing_levy_employee, housing_levy_employer,
+      paye, other_deductions, net_pay, employer_cost, calculation_snapshot, created_at
+    ) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `);
+  for (const row of oldPayslips) {
+    // Structured extraction below assumes the Kenya-shaped breakdown
+    // (statutoryDeductions.{nssf,shif,ahl,paye}) — the only country this
+    // product has actually issued real payroll for so far. Every field
+    // defaults safely to 0 if the shape doesn't match (e.g. a different
+    // country module's breakdown), and the FULL original breakdown is
+    // always preserved in calculation_snapshot regardless, so no data is
+    // lost even when the structured columns can't be populated exactly.
+    let breakdown = {};
+    try {
+      breakdown = row.breakdown_json ? JSON.parse(row.breakdown_json) : {};
+    } catch {
+      breakdown = {};
+    }
+    const sd = breakdown.statutoryDeductions || {};
+    insertV3Payslip.run(
+      row.id,
+      row.payroll_run_id,
+      row.employee_id,
+      breakdown.grossPay ?? row.net_pay ?? 0,
+      breakdown.grossPay ?? row.net_pay ?? 0, // pensionable_pay: KE module defaults this to grossPay when not given separately
+      sd.nssf?.totalEmployee ?? 0,
+      sd.nssf?.totalEmployer ?? 0,
+      sd.shif?.employee ?? 0,
+      sd.ahl?.employee ?? 0,
+      sd.ahl?.employer ?? 0,
+      sd.paye?.employee ?? 0,
+      JSON.stringify(breakdown.otherDeductions || []),
+      row.net_pay,
+      breakdown.employerCost ?? row.net_pay,
+      JSON.stringify(breakdown),
+      row.created_at
+    );
+  }
+
+  db.exec(`
+    drop table payslips;
+    alter table payslips_v3 rename to payslips;
+    create index if not exists idx_payslips_run on payslips(payroll_run_id);
+    create index if not exists idx_payslips_employee on payslips(employee_id);
+  `);
+}
+
 const MIGRATIONS = {
   2: migrateToV2,
+  3: migrateToV3,
 };
 
 /**
@@ -132,12 +341,21 @@ function runMigrations(db) {
     const next = version + 1;
     const migrate = MIGRATIONS[next];
     if (!migrate) break; // no migration registered for this step — nothing more we can do automatically
-    const tx = db.transaction(() => {
-      db.pragma('foreign_keys = OFF');
-      migrate(db);
-      db.pragma('foreign_keys = ON');
-    });
+
+    // PRAGMA foreign_keys is a silent no-op when set from inside an
+    // already-open transaction — SQLite only honors it between
+    // transactions. Setting it inside db.transaction()'s callback below
+    // (as an earlier version of this function did) looks like it works
+    // but doesn't: enforcement stays on the whole time, and a rebuild
+    // that drops a table still referenced by an unmigrated sibling
+    // (e.g. dropping `companies` while `employees` still FK-references
+    // it) fails with SQLITE_CONSTRAINT_FOREIGNKEY. Must be set here,
+    // outside the transaction, to actually take effect.
+    db.pragma('foreign_keys = OFF');
+    const tx = db.transaction(() => migrate(db));
     tx();
+    db.pragma('foreign_keys = ON');
+
     setSchemaVersion(db, next);
     version = next;
   }

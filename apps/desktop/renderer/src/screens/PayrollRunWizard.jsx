@@ -29,7 +29,7 @@ export default function PayrollRunWizard() {
     try {
       const newRun = await window.mikaju.payrollRuns.create({ periodMonth, periodYear });
       const generated = await window.mikaju.payslips.generateForRun({ payrollRunId: newRun.id });
-      setRun({ ...newRun, status: 'reviewed' });
+      setRun({ ...newRun, status: 'approved' });
       setPayslips(generated);
     } catch (err) {
       setError(err.message || 'Could not calculate this payroll run.');
@@ -86,12 +86,12 @@ export default function PayrollRunWizard() {
           {error && <div className="mk-error">{error}</div>}
 
           <table className="mk-table" style={{ marginBottom: 20 }}>
-            <thead><tr><th>Employee</th><th>Gross</th><th>Net pay</th><th></th></tr></thead>
+            <thead><tr><th>Employee</th><th>Basic salary</th><th>Net pay</th><th></th></tr></thead>
             <tbody>
               {payslips.map((p) => (
                 <tr key={p.id}>
                   <td>{employeesById[p.employee_id]?.full_name || p.employee_id}</td>
-                  <td>{employeesById[p.employee_id]?.gross_pay.toLocaleString()}</td>
+                  <td>{employeesById[p.employee_id]?.basic_salary.toLocaleString()}</td>
                   <td>{p.net_pay.toLocaleString()}</td>
                   <td>
                     <button

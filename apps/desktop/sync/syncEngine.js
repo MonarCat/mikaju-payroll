@@ -18,6 +18,14 @@
 const SYNCED_TABLES = ['companies', 'employees', 'payroll_runs', 'payslips'];
 const MAX_PUSH_ATTEMPTS = 5;
 
+// Only `employees` carries a `version` column on both sides (local SQLite
+// and the cloud `mikaju` schema) — companies/payroll_runs/payslips don't
+// have one at all in Supabase, matching the local schema after the v3
+// migration in db/migrations.js. The version-based skip-if-local-is-newer
+// check below only makes sense for tables that actually have the column;
+// querying `version` on the others would just throw "no such column".
+const VERSIONED_TABLES = new Set(['employees']);
+
 async function pushOutbox(supabase) {
   const { getDb } = require('../db');
   const db = getDb();
@@ -67,14 +75,39 @@ async function pullRemote(supabase, companyId) {
   const since = lastPullRow ? lastPullRow.value : '1970-01-01T00:00:00.000Z';
 
   for (const table of SYNCED_TABLES) {
-    const filterCol = table === 'companies' ? 'id' : 'company_id';
-    const filterVal = table === 'companies' ? companyId : companyId;
+    let data, error;
 
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .eq(filterCol, filterVal)
-      .gt('updated_at', since);
+    if (table === 'payslips') {
+      // payslips has neither a company_id column nor an updated_at
+      // column in the cloud schema — it's scoped through payroll_runs,
+      // and rows are immutable once created (frozen at generation),
+      // so created_at is the right change cursor instead.
+      const { data: runRows, error: runError } = await supabase
+        .from('payroll_runs')
+        .select('id')
+        .eq('company_id', companyId);
+      if (runError) {
+        results[table] = { error: runError.message };
+        continue;
+      }
+      const runIds = (runRows || []).map((r) => r.id);
+      if (runIds.length === 0) {
+        results[table] = { pulled: 0, applied: 0 };
+        continue;
+      }
+      ({ data, error } = await supabase
+        .from(table)
+        .select('*')
+        .in('payroll_run_id', runIds)
+        .gt('created_at', since));
+    } else {
+      const filterCol = table === 'companies' ? 'id' : 'company_id';
+      ({ data, error } = await supabase
+        .from(table)
+        .select('*')
+        .eq(filterCol, companyId)
+        .gt('updated_at', since));
+    }
 
     if (error) {
       results[table] = { error: error.message };
@@ -84,8 +117,10 @@ async function pullRemote(supabase, companyId) {
     let applied = 0;
     const upsertTx = db.transaction((records) => {
       for (const remote of records) {
-        const local = db.prepare(`select version from ${table} where id = ?`).get(remote.id);
-        if (local && local.version > remote.version) continue; // local is newer, skip
+        if (VERSIONED_TABLES.has(table)) {
+          const local = db.prepare(`select version from ${table} where id = ?`).get(remote.id);
+          if (local && local.version > remote.version) continue; // local is newer, skip
+        }
 
         const cols = Object.keys(remote);
         const placeholders = cols.map(() => '?').join(',');
