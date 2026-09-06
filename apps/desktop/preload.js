@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld('mikaju', {
   sync: {
     now: () => ipcRenderer.invoke('sync:now'),
     setActiveCompany: (companyId) => ipcRenderer.invoke('sync:setActiveCompany', companyId),
+    listConflicts: () => ipcRenderer.invoke('sync:listConflicts'),
+    resolveConflict: (args) => ipcRenderer.invoke('sync:resolveConflict', args),
     onStatusChanged: (callback) => {
       const listener = (_e, status) => callback(status);
       ipcRenderer.on('sync:statusChanged', listener);
