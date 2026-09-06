@@ -391,16 +391,32 @@ function registerIpcHandlers() {
         .maybeSingle();
       if (error) throw new Error(`Could not fetch the current remote version: ${error.message}`);
       const now = new Date().toISOString();
-      const requeued = { ...localPayload, version: (remoteRow?.version || 0) + 1, updated_at: now };
-      db.prepare("delete from sync_queue where table_name = ? and record_id = ? and status = 'conflict'")
-        .run(conflict.table_name, conflict.record_id);
-      db.prepare(
-        `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
-      ).run(conflict.table_name, 'update', conflict.record_id, JSON.stringify(requeued), now);
-      // Reflect the bumped version locally too, so this device's own copy
-      // matches what it's about to (re-)push.
-      db.prepare(`update ${conflict.table_name} set version = ?, updated_at = ? where id = ?`)
-        .run(requeued.version, now, conflict.record_id);
+
+      if (!remoteRow) {
+        // The remote row is gone entirely (deleted by whoever won the
+        // original race), not just changed — an 'update' op would
+        // silently match zero rows and do nothing, so this needs to be
+        // re-queued as an insert instead, to actually recreate it.
+        const requeued = { ...localPayload, version: 1, updated_at: now };
+        db.prepare("delete from sync_queue where table_name = ? and record_id = ? and status = 'conflict'")
+          .run(conflict.table_name, conflict.record_id);
+        db.prepare(
+          `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
+        ).run(conflict.table_name, 'insert', conflict.record_id, JSON.stringify(requeued), now);
+        db.prepare(`update ${conflict.table_name} set version = ?, updated_at = ? where id = ?`)
+          .run(requeued.version, now, conflict.record_id);
+      } else {
+        const requeued = { ...localPayload, version: remoteRow.version + 1, updated_at: now };
+        db.prepare("delete from sync_queue where table_name = ? and record_id = ? and status = 'conflict'")
+          .run(conflict.table_name, conflict.record_id);
+        db.prepare(
+          `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
+        ).run(conflict.table_name, 'update', conflict.record_id, JSON.stringify(requeued), now);
+        // Reflect the bumped version locally too, so this device's own
+        // copy matches what it's about to (re-)push.
+        db.prepare(`update ${conflict.table_name} set version = ?, updated_at = ? where id = ?`)
+          .run(requeued.version, now, conflict.record_id);
+      }
     } else {
       throw new Error(`Unknown resolution strategy "${strategy}". Expected "acceptRemote" or "keepLocal".`);
     }
