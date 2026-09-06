@@ -160,7 +160,7 @@ function registerIpcHandlers() {
     const now = new Date().toISOString();
     const record = {
       id: newId(), company_id: activeCompanyId, period_month: periodMonth, period_year: periodYear,
-      status: 'draft', approved_by: null, approved_at: null, created_at: now, updated_at: now,
+      status: 'draft', approved_by: null, approved_at: null, version: 1, created_at: now, updated_at: now,
     };
     try {
       writeRecord('payroll_runs', 'insert', record);
@@ -235,7 +235,11 @@ function registerIpcHandlers() {
       return record;
     });
 
-    ops.push({ tableName: 'payroll_runs', op: 'update', record: { id: payrollRunId, status: 'approved', updated_at: now } });
+    // version increments on every write to this row (insert = 1) so the
+    // sync engine's optimistic-concurrency check (payload.version - 1 =
+    // the version this device last knew about) stays correct even across
+    // this delete/insert/status-update batch.
+    ops.push({ tableName: 'payroll_runs', op: 'update', record: { id: payrollRunId, status: 'approved', version: run.version + 1, updated_at: now } });
 
     writeRecordsAtomic(ops);
 
@@ -275,7 +279,7 @@ function registerIpcHandlers() {
     }
 
     const now = new Date().toISOString();
-    const record = { id: payrollRunId, status: 'locked', approved_by: activeUserId, approved_at: now, updated_at: now };
+    const record = { id: payrollRunId, status: 'locked', approved_by: activeUserId, approved_at: now, version: run.version + 1, updated_at: now };
     writeRecord('payroll_runs', 'update', record);
     return record;
   });
@@ -328,6 +332,99 @@ function registerIpcHandlers() {
   ipcMain.handle('sync:setActiveCompany', (_e, companyId) => {
     activeCompanyId = companyId;
     getDb().prepare("insert into app_meta (key,value) values ('active_company_id',?) on conflict(key) do update set value=excluded.value").run(companyId);
+  });
+
+  // Unresolved conflicts only — once resolved, they stay in sync_conflicts
+  // for audit history but shouldn't keep surfacing in a "needs attention" list.
+  ipcMain.handle('sync:listConflicts', () => {
+    return getDb().prepare('select * from sync_conflicts where resolved_at is null order by detected_at desc').all();
+  });
+
+  // Two resolution strategies, both explicit — a conflict on payroll data
+  // is never auto-resolved by picking a side for the person.
+  //
+  //   acceptRemote: discard this device's conflicting change; pull in
+  //   whatever is currently on the server for that row.
+  //
+  //   keepLocal: re-enqueue this device's change as a fresh update
+  //   against the row's CURRENT remote version (re-fetched here, not
+  //   assumed), so the next sync's version check succeeds instead of
+  //   conflicting again on stale information.
+  ipcMain.handle('sync:resolveConflict', async (_e, { conflictId, strategy }) => {
+    const db = getDb();
+    const conflict = db.prepare('select * from sync_conflicts where id = ?').get(conflictId);
+    if (!conflict) throw new Error('Conflict not found.');
+    if (conflict.resolved_at) throw new Error('This conflict was already resolved.');
+    if (!activeUserId) throw new Error('You must be signed in to resolve a sync conflict.');
+
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Cannot resolve a conflict while offline — reconnect first.');
+
+    if (strategy === 'acceptRemote') {
+      const { data: remoteRow, error } = await supabase
+        .from(conflict.table_name)
+        .select('*')
+        .eq('id', conflict.record_id)
+        .maybeSingle();
+      if (error) throw new Error(`Could not fetch the current remote row: ${error.message}`);
+      if (remoteRow) {
+        const cols = Object.keys(remoteRow);
+        const placeholders = cols.map(() => '?').join(',');
+        const updateClause = cols.filter((c) => c !== 'id').map((c) => `${c} = excluded.${c}`).join(', ');
+        db.prepare(
+          `insert into ${conflict.table_name} (${cols.join(',')}) values (${placeholders})
+           on conflict(id) do update set ${updateClause}`
+        ).run(...cols.map((c) => remoteRow[c]));
+      } else {
+        // Remote row is gone entirely (deleted by whoever won the race) —
+        // remove the local copy too so it doesn't linger as a ghost.
+        db.prepare(`delete from ${conflict.table_name} where id = ?`).run(conflict.record_id);
+      }
+      db.prepare("delete from sync_queue where table_name = ? and record_id = ? and status = 'conflict'")
+        .run(conflict.table_name, conflict.record_id);
+    } else if (strategy === 'keepLocal') {
+      const localPayload = JSON.parse(conflict.local_payload);
+      const { data: remoteRow, error } = await supabase
+        .from(conflict.table_name)
+        .select('version')
+        .eq('id', conflict.record_id)
+        .maybeSingle();
+      if (error) throw new Error(`Could not fetch the current remote version: ${error.message}`);
+      const now = new Date().toISOString();
+
+      if (!remoteRow) {
+        // The remote row is gone entirely (deleted by whoever won the
+        // original race), not just changed — an 'update' op would
+        // silently match zero rows and do nothing, so this needs to be
+        // re-queued as an insert instead, to actually recreate it.
+        const requeued = { ...localPayload, version: 1, updated_at: now };
+        db.prepare("delete from sync_queue where table_name = ? and record_id = ? and status = 'conflict'")
+          .run(conflict.table_name, conflict.record_id);
+        db.prepare(
+          `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
+        ).run(conflict.table_name, 'insert', conflict.record_id, JSON.stringify(requeued), now);
+        db.prepare(`update ${conflict.table_name} set version = ?, updated_at = ? where id = ?`)
+          .run(requeued.version, now, conflict.record_id);
+      } else {
+        const requeued = { ...localPayload, version: remoteRow.version + 1, updated_at: now };
+        db.prepare("delete from sync_queue where table_name = ? and record_id = ? and status = 'conflict'")
+          .run(conflict.table_name, conflict.record_id);
+        db.prepare(
+          `insert into sync_queue (table_name, op, record_id, payload_json, created_at) values (?,?,?,?,?)`
+        ).run(conflict.table_name, 'update', conflict.record_id, JSON.stringify(requeued), now);
+        // Reflect the bumped version locally too, so this device's own
+        // copy matches what it's about to (re-)push.
+        db.prepare(`update ${conflict.table_name} set version = ?, updated_at = ? where id = ?`)
+          .run(requeued.version, now, conflict.record_id);
+      }
+    } else {
+      throw new Error(`Unknown resolution strategy "${strategy}". Expected "acceptRemote" or "keepLocal".`);
+    }
+
+    db.prepare('update sync_conflicts set resolved_at = ?, resolved_by = ? where id = ?')
+      .run(new Date().toISOString(), activeUserId, conflictId);
+
+    return { resolved: true, strategy };
   });
 
   ipcMain.on('network:statusChanged', (_e, isOnline) => {

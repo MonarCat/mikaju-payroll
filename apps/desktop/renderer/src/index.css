@@ -47,3 +47,21 @@ body { margin: 0; background: var(--mikaju-bg); color: var(--mikaju-ink); }
 .mk-sidebar { width: 220px; background: #fff; border-right: 1px solid var(--mikaju-border); padding: 20px 0; }
 .mk-sidebar a { display: block; padding: 10px 24px; color: var(--mikaju-ink); text-decoration: none; font-size: 14px; }
 .mk-sidebar a.active { background: #eaf3ef; color: var(--mikaju-green-dark); font-weight: 600; }
+.mk-card-wide { max-width: 760px; }
+.mk-badge {
+  display: inline-block;
+  background: var(--mikaju-danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.mk-btn-secondary {
+  background: #fff;
+  color: var(--mikaju-ink);
+  border: 1px solid var(--mikaju-border);
+}
+.mk-btn-secondary:hover { background: var(--mikaju-bg); }

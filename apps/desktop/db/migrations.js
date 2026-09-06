@@ -16,7 +16,7 @@
  * a human, not to a migration running silently at startup.
  */
 
-const CURRENT_SCHEMA_VERSION = 3;
+const CURRENT_SCHEMA_VERSION = 4;
 
 function getSchemaVersion(db) {
   const row = db.prepare("select value from app_meta where key = 'schema_version'").get();
@@ -324,9 +324,94 @@ function migrateToV3(db) {
   `);
 }
 
+/**
+ * v4: sync conflict safety (Workstream 3).
+ *
+ *   - payroll_runs gains a `version` column back (cloud added it in the
+ *     add_version_to_payroll_runs migration), so the sync engine can apply
+ *     real optimistic concurrency to it — the highest-stakes table for a
+ *     concurrent edit, since it covers approval and locking.
+ *   - sync_queue gains a `status` column ('pending' | 'failed' | 'conflict').
+ *     Previously, a row that had exhausted MAX_PUSH_ATTEMPTS got a
+ *     "Gave up..." message in last_error but was NEVER excluded from the
+ *     next sync's retry query (`select * from sync_queue order by id asc`
+ *     had no status filter at all) — it just kept retrying forever
+ *     despite the message claiming otherwise. Existing rows are backfilled
+ *     to 'failed' if they'd already hit the attempt cap, 'pending'
+ *     otherwise.
+ *   - sync_conflicts is new: durable local storage for a push that failed
+ *     because the remote row had already changed since this device last
+ *     saw it. Both payloads are kept so a person can compare and decide —
+ *     conflicts on payroll data are never auto-resolved by picking a side.
+ */
+function migrateToV4(db) {
+  const badPayrollStatuses = db
+    .prepare("select distinct status from payroll_runs where status not in ('draft','approved','locked')")
+    .all();
+  if (badPayrollStatuses.length > 0) {
+    console.warn(
+      `[db migration v4] payroll_runs has unexpected status value(s): ${badPayrollStatuses.map(r => r.status).join(', ')}`
+    );
+  }
+
+  db.exec(`
+    create table payroll_runs_v4 (
+      id             text primary key,
+      company_id     text not null references companies(id),
+      period_month   integer not null check (period_month between 1 and 12),
+      period_year    integer not null,
+      status         text not null default 'draft' check (status in ('draft','approved','locked')),
+      approved_by    text,
+      approved_at    text,
+      version        integer not null default 1,
+      created_at     text not null,
+      updated_at     text not null,
+      unique (company_id, period_month, period_year)
+    );
+    insert into payroll_runs_v4 (id, company_id, period_month, period_year, status, approved_by, approved_at, version, created_at, updated_at)
+    select id, company_id, period_month, period_year, status, approved_by, approved_at, 1, created_at, updated_at
+    from payroll_runs;
+    drop table payroll_runs;
+    alter table payroll_runs_v4 rename to payroll_runs;
+    create index if not exists idx_payroll_runs_company on payroll_runs(company_id);
+  `);
+
+  db.exec(`
+    create table sync_queue_v4 (
+      id           integer primary key autoincrement,
+      table_name   text not null,
+      op           text not null,
+      record_id    text not null,
+      payload_json text not null,
+      created_at   text not null,
+      attempts     integer not null default 0,
+      last_error   text,
+      status       text not null default 'pending' check (status in ('pending','failed','conflict'))
+    );
+    insert into sync_queue_v4 (id, table_name, op, record_id, payload_json, created_at, attempts, last_error, status)
+    select id, table_name, op, record_id, payload_json, created_at, attempts, last_error,
+           case when attempts >= 5 then 'failed' else 'pending' end
+    from sync_queue;
+    drop table sync_queue;
+    alter table sync_queue_v4 rename to sync_queue;
+
+    create table if not exists sync_conflicts (
+      id              text primary key,
+      table_name      text not null,
+      record_id       text not null,
+      local_payload   text not null,
+      remote_payload  text,
+      detected_at     text not null,
+      resolved_at     text,
+      resolved_by     text
+    );
+  `);
+}
+
 const MIGRATIONS = {
   2: migrateToV2,
   3: migrateToV3,
+  4: migrateToV4,
 };
 
 /**
